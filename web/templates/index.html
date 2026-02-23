@@ -46,9 +46,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .dash-content{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
 
 /* Header: logo left, settings right */
-.dash-header{display:flex;justify-content:space-between;align-items:flex-start;padding:22px 52px 0}
+.dash-header{display:flex;justify-content:flex-start;align-items:flex-start;padding:22px 52px 0}
 .dash-logo{height:34px;width:auto;border-radius:8px;object-fit:contain;display:none}
-.icon-btn{width:40px;height:40px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;font-size:17px;transition:all var(--tr);border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.15);backdrop-filter:blur(12px)}
+.icon-btn{position:fixed;top:22px;right:52px;z-index:10;width:40px;height:40px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;font-size:17px;transition:all var(--tr);border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.15);backdrop-filter:blur(12px)}
 .icon-btn:hover{background:rgba(255,255,255,.28);transform:translateY(-1px)}
 
 /* Hero */
@@ -128,11 +128,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .s-box{background:white;border-radius:22px;width:min(940px,100%);height:min(690px,90vh);display:flex;overflow:hidden;box-shadow:0 32px 80px rgba(168,85,247,.2)}
 .s-nav{width:215px;flex-shrink:0;background:linear-gradient(180deg,#faf5ff 0%,#fdf2f8 100%);border-right:1px solid #ede8f5;display:flex;flex-direction:column;overflow-y:auto;position:relative}
 /* Red X button in top-left corner of nav */
-.s-close-top{position:absolute;top:12px;left:12px;width:20px;height:20px;border-radius:50%;background:#ff5f57;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,0);font-size:10px;font-weight:700;transition:all var(--tr);box-shadow:0 2px 5px rgba(255,95,87,.35);z-index:1}
+.s-close-top{position:absolute;top:12px;right:12px;width:20px;height:20px;border-radius:50%;background:#ff5f57;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,0);font-size:10px;font-weight:700;transition:all var(--tr);box-shadow:0 2px 5px rgba(255,95,87,.35);z-index:1}
 .s-close-top:hover{color:rgba(0,0,0,.5)}
 .s-close-top::after{content:'✕';position:absolute;opacity:0;transition:opacity var(--tr)}
 .s-close-top:hover::after{opacity:1}
-.s-nav-header{padding:20px 18px 14px 42px;display:flex;align-items:center;gap:10px}
+.s-nav-header{padding:20px 18px 14px 18px;display:flex;align-items:center;gap:10px}
 .s-nav-ico{width:32px;height:32px;background:var(--grad);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px color-mix(in srgb,var(--h1) 35%,transparent)}
 .s-nav-t{font-size:14px;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .s-nav-list{padding:8px;flex:1}
@@ -220,7 +220,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
   .s-nav{width:100%;height:auto;border-right:none;border-bottom:1px solid #ede8f5;flex-shrink:0}
   .s-nav-list{display:flex;flex-direction:row;flex-wrap:wrap;gap:3px;padding:6px 10px 10px}
   .s-ni{padding:7px 10px;margin-bottom:0;font-size:12px}
-  .s-nav-header{padding:12px 14px 6px 40px}
+  .s-nav-header{padding:12px 14px 6px 14px}
   .s-content{padding:16px 14px}
   .wp-grid{grid-template-columns:repeat(2,1fr)}
   .theme-grid{grid-template-columns:repeat(3,1fr)}
