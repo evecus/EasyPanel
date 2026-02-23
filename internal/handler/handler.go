@@ -109,6 +109,7 @@ func GetPanelInfo(c *gin.Context) {
 		"font_appname":  s.FontAppname,
 		"font_ui":       s.FontUI,
 		"public_mode":   config.Main.PublicMode,
+		"network_mode":  s.NetworkMode,
 	})
 }
 
