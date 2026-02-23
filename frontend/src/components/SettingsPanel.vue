@@ -47,6 +47,8 @@
           <!-- ── 显示 ── -->
           <div v-if="activeTab === 'display'">
             <div class="s-title">{{ t('titleDisplay') }}</div>
+
+            <!-- 主机名 & LOGO -->
             <div class="s-card">
               <div class="s-card-title">主机名 &amp; LOGO</div>
               <div class="s-row"><label class="s-lbl">{{ t('lblHostnameDisplay') }}</label><input class="s-inp" v-model="form.hostname" placeholder="EasyPanel" /></div>
@@ -61,7 +63,10 @@
               </div>
               <button class="btn btn-p" @click="savePanelCfg">{{ t('saveBtn') }}</button>
             </div>
-            <div class="s-card" style="margin-top:12px">
+
+            <!-- 样式（尺寸 + 图标） -->
+            <div class="s-card-title" style="margin:20px 0 10px;">样式</div>
+            <div class="s-card">
               <div class="s-card-title">尺寸大小</div>
               <div class="s-row" v-for="sl in sizeSliders" :key="sl.key">
                 <label class="s-lbl">{{ t(sl.label) }}</label>
@@ -82,13 +87,10 @@
               </div>
             </div>
             <button class="btn btn-p" @click="saveDisplay" style="margin-top:12px">{{ t('saveDisplayBtn') }}</button>
-          </div>
 
-          <!-- ── 字体 ── -->
-          <div v-if="activeTab === 'fonts'">
-            <div class="s-title">{{ t('titleFonts') }}</div>
+            <!-- 字体 -->
+            <div class="s-card-title" style="margin:20px 0 10px;">字体</div>
             <div class="s-card">
-              <div class="s-card-title">选择字体</div>
               <div class="s-row" v-for="f in fontFields" :key="f.key">
                 <label class="s-lbl">{{ t(f.label) }}</label>
                 <select class="s-sel" v-model="form.fonts[f.key]">
@@ -257,7 +259,6 @@ const form = reactive({
 const TABS = [
   { id: 'account',   icon: '👤', labelKey: 'niAccount' },
   { id: 'display',   icon: '📐', labelKey: 'niDisplay' },
-  { id: 'fonts',     icon: '🔤', labelKey: 'niFonts' },
   { id: 'theme',     icon: '🌈', labelKey: 'niTheme' },
   { id: 'clock',     icon: '🕐', labelKey: 'niClock' },
   { id: 'wallpaper', icon: '🖼️', labelKey: 'niWallpaper' },
