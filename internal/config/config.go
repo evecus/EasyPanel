@@ -127,7 +127,7 @@ func createDefaultMain() error {
 	rand.Read(secret)
 	hash, _ := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
 	Main = &MainConfig{
-		Port:       3000,
+		Port:       3088,
 		JWTSecret:  hex.EncodeToString(secret),
 		PublicMode: false,
 		Users:      []User{{Username: "admin", Password: string(hash), Nickname: "Admin", IsAdmin: true}},
