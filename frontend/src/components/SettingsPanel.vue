@@ -67,18 +67,7 @@
             <!-- 样式（尺寸 + 图标） -->
             <div class="s-card-title" style="margin:20px 0 10px;">样式</div>
             <div class="s-card">
-              <div class="s-card-title">尺寸大小</div>
-              <div class="s-row" v-for="sl in sizeSliders" :key="sl.key">
-                <label class="s-lbl">{{ t(sl.label) }}</label>
-                <div class="s-slider-row">
-                  <input type="range" class="s-slider" v-model="form.display[sl.key]" :min="sl.min" :max="sl.max" />
-                  <span class="s-slider-val">{{ form.display[sl.key] }}{{ sl.unit }}</span>
-                </div>
-              </div>
-            </div>
-            <div class="s-card" style="margin-top:12px">
-              <div class="s-card-title">图标样式</div>
-              <div class="s-row" v-for="sl in iconSliders" :key="sl.key">
+              <div class="s-row" v-for="sl in [...sizeSliders, ...iconSliders]" :key="sl.key">
                 <label class="s-lbl">{{ t(sl.label) }}</label>
                 <div class="s-slider-row">
                   <input type="range" class="s-slider" v-model="form.display[sl.key]" :min="sl.min" :max="sl.max" />
