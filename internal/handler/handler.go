@@ -4,9 +4,13 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -383,6 +387,65 @@ func CheckAuth(c *gin.Context) {
 		"nickname":  user.Nickname,
 		"is_admin":  user.IsAdmin,
 	})
+}
+
+// ── FETCH ICON ───────────────────────────────────────────────
+
+func FetchIcon(c *gin.Context) {
+	rawURL := strings.TrimSpace(c.Query("url"))
+	if rawURL == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "url required"})
+		return
+	}
+
+	// 补全协议
+	if !strings.HasPrefix(rawURL, "http://") && !strings.HasPrefix(rawURL, "https://") {
+		rawURL = "http://" + rawURL
+	}
+
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid url"})
+		return
+	}
+
+	// 先尝试抓 HTML 解析 <link rel="icon">
+	client := &http.Client{Timeout: 6 * time.Second}
+	resp, err := client.Get(rawURL)
+	iconURL := ""
+	if err == nil {
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 256*1024))
+		html := string(body)
+		// 匹配 <link rel="icon/shortcut icon/apple-touch-icon" href="...">
+		re := regexp.MustCompile(`(?i)<link[^>]+rel=["'](?:shortcut icon|icon|apple-touch-icon)["'][^>]+href=["']([^"']+)["']`)
+		if m := re.FindStringSubmatch(html); len(m) > 1 {
+			iconURL = m[1]
+		} else {
+			// 反过来找 href 在前的情况
+			re2 := regexp.MustCompile(`(?i)<link[^>]+href=["']([^"']+)["'][^>]+rel=["'](?:shortcut icon|icon|apple-touch-icon)["']`)
+			if m2 := re2.FindStringSubmatch(html); len(m2) > 1 {
+				iconURL = m2[1]
+			}
+		}
+	}
+
+	// 转为绝对路径
+	base := parsed.Scheme + "://" + parsed.Host
+	if iconURL != "" {
+		if strings.HasPrefix(iconURL, "//") {
+			iconURL = parsed.Scheme + ":" + iconURL
+		} else if strings.HasPrefix(iconURL, "/") {
+			iconURL = base + iconURL
+		} else if !strings.HasPrefix(iconURL, "http") {
+			iconURL = base + "/" + iconURL
+		}
+	} else {
+		// fallback: /favicon.ico
+		iconURL = base + "/favicon.ico"
+	}
+
+	c.JSON(http.StatusOK, gin.H{"icon": iconURL})
 }
 
 // keep compiler happy
