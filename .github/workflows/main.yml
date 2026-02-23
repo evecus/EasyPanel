@@ -8,8 +8,14 @@ on:
 
 jobs:
   build:
-    name: Build for Linux
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64   # 加
 
     steps:
       - name: Checkout code
