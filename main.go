@@ -39,7 +39,6 @@ func main() {
 	}
 
 	fmt.Printf("\n🚀 EasyPanel running on http://0.0.0.0:%d\n", config.Main.Port)
-	fmt.Printf("   Default credentials: admin / admin\n\n")
 
 	r := gin.Default()
 
