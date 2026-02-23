@@ -32,6 +32,9 @@
         </div>
         <div v-else class="img-row">
           <input type="text" class="fi2" v-model="iconUrl" :placeholder="t('iconUrlPlaceholder')" />
+          <button class="upbtn" @click="fetchIcon" :disabled="fetchingIcon" :title="t('fetchIconBtn')">
+            {{ fetchingIcon ? '...' : '🔍' }}
+          </button>
           <label class="upbtn" for="icon-file-inp">📁</label>
           <input type="file" id="icon-file-inp" accept="image/*" style="display:none" @change="uploadIcon" />
         </div>
@@ -87,6 +90,7 @@ const appTitle = ref('')
 const appUrlLan = ref('')
 const appUrlWan = ref('')
 const appOpen = ref('new_tab')
+const fetchingIcon = ref(false)
 
 // 地址处理：有协议头原样保存，无协议头用 // 前缀（继承当前页面协议）
 function normalizeUrl(url) {
@@ -159,6 +163,20 @@ async function deleteApp() {
     emit('deleted')
     emit('toast', t('tDeleted'))
   } catch { emit('toast', t('tDeleteFailed')) }
+}
+
+async function fetchIcon() {
+  // 取内网或公网地址中第一个有值的
+  const addr = (appUrlLan.value || appUrlWan.value).trim()
+  if (!addr) { emit('toast', t('fetchIconNoUrl')); return }
+  fetchingIcon.value = true
+  try {
+    const res = await fetch(`/api/fetch-icon?url=${encodeURIComponent(addr)}`)
+    const d = await res.json()
+    if (d.icon) { iconUrl.value = d.icon; emit('toast', t('fetchIconOk')) }
+    else emit('toast', t('fetchIconFail'))
+  } catch { emit('toast', t('fetchIconFail')) }
+  finally { fetchingIcon.value = false }
 }
 
 async function uploadIcon(e) {
