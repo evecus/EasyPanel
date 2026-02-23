@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>EasyPanel</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --accent:#22c55e;--accent2:#16a34a;
+  --text:#1e293b;--sub:#64748b;--border:#e8edf2;--bg:#f5f7fa;
+  --tr:0.2s cubic-bezier(.4,0,.2,1);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+
+/* ─── LOGIN OVERLAY ──────────────────────────────────────────────── */
+#login-overlay{position:fixed;inset:0;z-index:800;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.4);backdrop-filter:blur(10px)}
+#login-overlay.hidden{display:none}
+.login-card{background:rgba(255,255,255,.95);backdrop-filter:blur(24px);border-radius:20px;padding:36px 40px 28px;width:380px;max-width:92vw;box-shadow:0 24px 60px rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.8);animation:pop-in .22s ease}
+@keyframes pop-in{from{transform:scale(.93) translateY(10px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.login-logo-wrap{width:44px;height:44px;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.login-title{font-size:24px;font-weight:700;text-align:center;margin-bottom:6px;color:#1e293b}
+.login-sub{font-size:13px;color:#94a3b8;text-align:center;margin-bottom:22px}
+.fg{position:relative;margin-bottom:12px}
+.fg input{width:100%;padding:12px 14px 12px 40px;border:1.5px solid #e2e8f0;border-radius:11px;font-size:15px;background:#fafbfc;outline:none;color:#1e293b;transition:border-color var(--tr)}
+.fg input:focus{border-color:var(--accent);background:#fff}
+.fg .fi{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;color:#94a3b8}
+.login-btn{width:100%;padding:13px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:11px;font-size:15px;font-weight:600;cursor:pointer;margin-top:6px;transition:all var(--tr);color:#1e293b}
+.login-btn:hover{background:#f1f5f9;border-color:#cbd5e1}
+.login-err{color:#ef4444;font-size:13px;text-align:center;margin-top:8px;display:none}
+.login-foot{text-align:center;margin-top:16px;font-size:12px;color:#94a3b8}
+
+/* ─── DASHBOARD ──────────────────────────────────────────────────── */
+#dashboard{min-height:100vh;position:relative}
+.wp-bg{position:fixed;inset:0;z-index:0;background-size:cover;background-position:center;transition:background .5s}
+.wp-overlay{position:fixed;inset:0;z-index:0;background:rgba(0,0,0,.2)}
+.dash-content{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
+
+/* Header */
+.dash-header{display:flex;justify-content:space-between;align-items:center;padding:20px 48px 0}
+.dash-logo{height:36px;width:auto;border-radius:8px;object-fit:contain;display:none}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.icon-btn{width:38px;height:38px;background:rgba(255,255,255,.18);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.28);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;transition:all var(--tr);flex-shrink:0}
+.icon-btn:hover{background:rgba(255,255,255,.3)}
+
+/* Hero */
+.hero{text-align:center;padding:28px 20px 36px;color:white;flex-shrink:0}
+.hero-hostname{font-size:52px;font-weight:900;text-shadow:0 2px 16px rgba(0,0,0,.35);letter-spacing:-1px;line-height:1.1;margin-bottom:10px}
+.hero-clock{font-size:16px;opacity:.88;text-shadow:0 1px 4px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.hero-clock .div{opacity:.4}
+
+/* Apps */
+.apps-outer{flex:1;padding:0 48px 48px;display:flex;justify-content:center}
+.apps-inner{width:100%;max-width:1100px}
+
+.group-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.group-lbl{color:rgba(255,255,255,.9);font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;text-shadow:0 1px 4px rgba(0,0,0,.3)}
+.group-tools{display:none;align-items:center;gap:6px}
+.group-row:hover .group-tools{display:flex}
+.tool-btn{width:28px;height:28px;border-radius:7px;border:1.5px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);backdrop-filter:blur(8px);cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.88);font-size:12px;transition:all var(--tr)}
+.tool-btn:hover{background:rgba(255,255,255,.28);border-color:rgba(255,255,255,.8)}
+.tool-btn.active{background:rgba(255,255,255,.32);border-color:white}
+
+#sort-bar{display:none;margin-bottom:14px;gap:8px;flex-wrap:wrap}
+.sort-btn{padding:7px 16px;background:rgba(255,255,255,.88);color:#1e293b;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;box-shadow:0 2px 8px rgba(0,0,0,.15);transition:all var(--tr)}
+.sort-btn:hover{background:white;transform:translateY(-1px)}
+
+.apps-grid{display:flex;flex-wrap:wrap;gap:20px;justify-content:flex-start}
+
+/* App card */
+.app-card{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;width:90px;user-select:none;-webkit-user-select:none}
+.app-icon-wrap{width:76px;height:76px;border-radius:18px;overflow:hidden;transition:transform var(--tr),box-shadow var(--tr);box-shadow:0 4px 16px rgba(0,0,0,.22);flex-shrink:0}
+.app-card:not(.sort-mode):hover .app-icon-wrap{transform:translateY(-4px) scale(1.06);box-shadow:0 10px 28px rgba(0,0,0,.32)}
+.app-icon-img{width:100%;height:100%;object-fit:cover;border-radius:18px;display:block}
+.app-icon-txt{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.18);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.28);border-radius:18px;font-size:24px;font-weight:700;color:white;text-shadow:0 1px 4px rgba(0,0,0,.3)}
+.app-name{font-size:12px;color:rgba(255,255,255,.95);text-align:center;font-weight:500;text-shadow:0 1px 3px rgba(0,0,0,.4);max-width:86px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app-card.sort-mode{animation:wiggle .45s ease infinite alternate}
+@keyframes wiggle{from{transform:rotate(-1.2deg)}to{transform:rotate(1.2deg)}}
+.app-card.sort-mode .app-icon-wrap{border:2px dashed rgba(255,255,255,.6);transform:none!important;box-shadow:0 4px 14px rgba(0,0,0,.2)!important}
+.app-card.drag-over .app-icon-wrap{border-color:white;background:rgba(255,255,255,.15)}
+
+/* ─── CONTEXT MENU ───────────────────────────────────────────────── */
+.ctx{position:fixed;z-index:900;background:white;border-radius:13px;box-shadow:0 10px 36px rgba(0,0,0,.18);padding:5px;min-width:128px;display:none;animation:pop-in .14s ease}
+.ctx.show{display:block}
+.ctx-item{display:flex;align-items:center;gap:9px;padding:9px 13px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;color:#1e293b;transition:background var(--tr)}
+.ctx-item:hover{background:#f1f5f9}
+.ctx-item.danger{color:#ef4444}
+.ctx-item.danger:hover{background:#fef2f2}
+
+/* ─── APP MODAL ──────────────────────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.42);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.show{display:flex}
+.modal{background:white;border-radius:20px;padding:26px;width:460px;max-width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 56px rgba(0,0,0,.24);animation:pop-in .2s ease}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-size:16px;font-weight:700;color:#1e293b}
+.close-btn{width:30px;height:30px;border:none;background:#f1f5f9;border-radius:8px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;color:#64748b;transition:all var(--tr)}
+.close-btn:hover{background:#e2e8f0}
+.preview-box{background:#f8fafc;border-radius:12px;padding:14px;margin-bottom:18px;display:flex;align-items:center;gap:13px}
+.preview-ico{width:50px;height:50px;border-radius:13px;overflow:hidden;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#64748b;flex-shrink:0}
+.preview-ico img{width:100%;height:100%;object-fit:cover}
+.preview-title{font-size:14px;font-weight:600;color:#1e293b}
+.preview-url{font-size:12px;color:#94a3b8;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px}
+.fl{display:block;font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px}
+.fi2{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;color:#1e293b;outline:none;transition:border-color var(--tr);background:white;font-family:inherit}
+.fi2:focus{border-color:var(--accent)}
+.fr{margin-bottom:13px}
+.itabs{display:flex;gap:3px;background:#f1f5f9;border-radius:10px;padding:3px;margin-bottom:9px}
+.itab{flex:1;padding:8px;border:none;background:transparent;border-radius:7px;cursor:pointer;font-size:13px;font-weight:500;color:#64748b;transition:all var(--tr)}
+.itab.active{background:white;color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.1);font-weight:600}
+.img-row{display:flex;gap:7px;align-items:center}
+.img-row .fi2{flex:1}
+.upbtn{padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;background:white;cursor:pointer;font-size:13px;font-weight:500;color:#64748b;white-space:nowrap;transition:all var(--tr);display:flex;align-items:center;gap:5px}
+.upbtn:hover{border-color:var(--accent);color:var(--accent)}
+.mfooter{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:16px;border-top:1px solid #f1f5f9}
+.btn{padding:9px 18px;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all var(--tr)}
+.btn-s{background:#f1f5f9;color:#64748b}.btn-s:hover{background:#e2e8f0}
+.btn-p{background:var(--accent);color:white}.btn-p:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-d{background:#fef2f2;color:#ef4444}.btn-d:hover{background:#fee2e2}
+
+/* ─── SETTINGS PANEL (like sun-panel) ────────────────────────────── */
+.s-backdrop{position:fixed;inset:0;z-index:750;background:rgba(0,0,0,.3);display:none}
+.s-backdrop.show{display:block}
+.s-panel{position:fixed;inset:0;z-index:760;display:none;align-items:center;justify-content:center;padding:20px}
+.s-panel.open{display:flex}
+.s-box{background:white;border-radius:20px;width:min(900px,100%);height:min(640px,90vh);display:flex;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.22);animation:pop-in .22s ease}
+
+/* Left nav */
+.s-nav{width:200px;flex-shrink:0;background:#f8fafc;border-right:1px solid #edf0f3;display:flex;flex-direction:column;overflow-y:auto}
+.s-nav-header{padding:20px 16px 12px;display:flex;align-items:center;gap:10px}
+.s-nav-logo{width:30px;height:30px;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.s-nav-title{font-size:14px;font-weight:700;color:#1e293b}
+.s-nav-list{padding:8px;flex:1}
+.s-nav-item{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:500;color:#64748b;transition:all var(--tr);margin-bottom:2px}
+.s-nav-item:hover{background:#eef2f7;color:#1e293b}
+.s-nav-item.active{background:#f0fdf4;color:#16a34a;font-weight:600}
+.s-nav-item .s-ico{font-size:16px;width:20px;text-align:center}
+.s-nav-footer{padding:12px 16px;border-top:1px solid #edf0f3}
+.s-close-btn{width:100%;padding:9px;background:#f1f5f9;border:none;border-radius:10px;cursor:pointer;font-size:13px;color:#64748b;font-weight:500;transition:all var(--tr)}
+.s-close-btn:hover{background:#e2e8f0}
+
+/* Right content */
+.s-content{flex:1;overflow-y:auto;padding:28px}
+.s-section{display:none}
+.s-section.active{display:block}
+.s-title{font-size:16px;font-weight:700;color:#1e293b;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid #f1f5f9}
+
+/* Form elements in settings */
+.s-card{background:#f8fafc;border-radius:12px;padding:16px;margin-bottom:14px}
+.s-row{margin-bottom:14px}
+.s-label{display:block;font-size:12px;font-weight:600;color:#94a3b8;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.s-input{width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;color:#1e293b;outline:none;transition:border-color var(--tr);background:white;font-family:inherit}
+.s-input:focus{border-color:var(--accent)}
+.s-input:disabled{background:#f8fafc;color:#94a3b8}
+
+/* Toggle */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid #f1f5f9}
+.toggle-row:last-child{border-bottom:none}
+.toggle-info{}
+.toggle-lbl{font-size:14px;font-weight:500;color:#1e293b}
+.toggle-sub{font-size:12px;color:#94a3b8;margin-top:2px}
+.sw{position:relative;width:40px;height:22px;flex-shrink:0}
+.sw input{opacity:0;width:0;height:0}
+.sl{position:absolute;inset:0;background:#cbd5e1;border-radius:22px;cursor:pointer;transition:background var(--tr)}
+.sl:before{content:'';position:absolute;width:16px;height:16px;background:white;border-radius:50%;left:3px;top:3px;transition:transform var(--tr);box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.sw input:checked+.sl{background:var(--accent)}
+.sw input:checked+.sl:before{transform:translateX(18px)}
+
+/* User table */
+.user-table{width:100%;border-collapse:collapse}
+.user-table th{font-size:12px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;padding:8px 12px;text-align:left;background:#f8fafc;border-bottom:1px solid #edf0f3}
+.user-table td{padding:11px 12px;border-bottom:1px solid #f1f5f9;font-size:14px;color:#1e293b}
+.user-table tr:last-child td{border-bottom:none}
+.badge{display:inline-flex;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.badge-admin{background:#fef3c7;color:#d97706}
+.badge-user{background:#f0fdf4;color:#16a34a}
+.badge-cur{background:#e0f2fe;color:#0284c7;margin-left:4px}
+
+/* Wallpaper grid */
+.wp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.wp-thumb{aspect-ratio:16/9;border-radius:10px;cursor:pointer;overflow:hidden;border:3px solid transparent;transition:all var(--tr)}
+.wp-thumb:hover,.wp-thumb.sel{border-color:var(--accent);transform:scale(1.03)}
+.wp-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* Info box */
+.info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;font-size:13px;color:#3b82f6;margin-bottom:16px;line-height:1.6}
+
+/* Toast */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(120px);background:rgba(15,23,42,.82);color:white;padding:9px 20px;border-radius:22px;font-size:13px;z-index:9999;transition:transform .26s;backdrop-filter:blur(10px);white-space:nowrap;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ─── MOBILE ──────────────────────────────────────────────────────── */
+@media(max-width:700px){
+  .dash-header{padding:14px 16px 0}
+  .hero-hostname{font-size:34px}
+  .apps-outer{padding:0 16px 32px}
+  .apps-grid{gap:14px;justify-content:center}
+  .app-card{width:76px}
+  .app-icon-wrap{width:64px;height:64px}
+  .app-icon-txt{font-size:20px}
+  .app-name{max-width:72px}
+
+  /* Settings full screen on mobile */
+  .s-panel{padding:0}
+  .s-box{width:100%;height:100%;border-radius:0;flex-direction:column}
+  .s-nav{width:100%;height:auto;border-right:none;border-bottom:1px solid #edf0f3}
+  .s-nav-list{display:flex;flex-direction:row;flex-wrap:wrap;gap:4px;padding:8px}
+  .s-nav-item{padding:8px 12px;margin-bottom:0;font-size:12px}
+  .s-content{padding:16px}
+  .s-nav-header{padding:14px 12px 8px}
+  .wp-grid{grid-template-columns:repeat(2,1fr)}
+
+  .login-card{padding:28px 22px 22px}
+  .modal{padding:20px 16px}
+}
+@media(max-width:380px){
+  .apps-grid{gap:10px}
+  .app-card{width:68px}
+  .app-icon-wrap{width:58px;height:58px}
+}
+</style>
+</head>
+<body>
+
+<!-- ─── DASHBOARD ──────────────────────────────────────────────────── -->
+<div id="dashboard">
+  <div class="wp-bg" id="wp-bg"></div>
+  <div class="wp-overlay"></div>
+  <div class="dash-content">
+    <div class="dash-header">
+      <img class="dash-logo" id="dash-logo" src="" alt="">
+      <div class="hdr-right">
+        <button class="icon-btn" id="btn-settings" title="设置">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-hostname" id="hero-hostname">EasyPanel</div>
+      <div class="hero-clock" id="hero-clock"></div>
+    </div>
+
+    <div class="apps-outer">
+      <div class="apps-inner" id="apps-inner"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── LOGIN OVERLAY ──────────────────────────────────────────────── -->
+<div id="login-overlay" class="hidden">
+  <div class="login-card">
+    <div class="login-logo-wrap">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+    </div>
+    <div class="login-title">EasyPanel</div>
+    <div class="login-sub" id="login-sub">请登录以继续</div>
+    <div class="fg"><span class="fi">👤</span><input type="text" id="lu" placeholder="账号" autocomplete="username"></div>
+    <div class="fg"><span class="fi">🔒</span><input type="password" id="lp" placeholder="密码" autocomplete="current-password"></div>
+    <p class="login-err" id="lerr">账号或密码错误</p>
+    <button class="login-btn" onclick="doLogin()">登录</button>
+    <p class="login-foot">Powered By EasyPanel</p>
+  </div>
+</div>
+
+<!-- ─── APP MODAL ──────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="app-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">添加应用</div>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="preview-box">
+      <div class="preview-ico" id="prev-ico">A</div>
+      <div><div class="preview-title" id="prev-title">应用名称</div><div class="preview-url" id="prev-url">https://...</div></div>
+    </div>
+    <div class="fr">
+      <label class="fl">图标风格</label>
+      <div class="itabs">
+        <button class="itab active" onclick="setIT('text')">文字</button>
+        <button class="itab" onclick="setIT('image')">图片</button>
+      </div>
+      <div id="it-text"><input type="text" class="fi2" id="icon-txt" placeholder="文字（最多2字符）" maxlength="2" oninput="updPrev()"></div>
+      <div id="it-img" style="display:none">
+        <div class="img-row">
+          <input type="text" class="fi2" id="icon-url" placeholder="输入图标地址" oninput="updPrev()">
+          <label class="upbtn" for="icon-file">📁 上传</label>
+          <input type="file" id="icon-file" accept="image/*" style="display:none" onchange="uploadIcon(this)">
+        </div>
+      </div>
+    </div>
+    <div class="fr"><label class="fl">标题 *</label><input type="text" class="fi2" id="app-title" placeholder="请输入" maxlength="20" oninput="updPrev()"></div>
+    <div class="fr"><label class="fl">地址 *</label><input type="text" class="fi2" id="app-url" placeholder="http(s)://"></div>
+    <div class="fr"><label class="fl">打开方式</label>
+      <select class="fi2" id="app-open"><option value="new_tab">新窗口打开</option><option value="current">当前窗口</option></select>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-d" id="modal-del" onclick="delApp()" style="display:none">删除</button>
+      <button class="btn btn-s" onclick="closeModal()">取消</button>
+      <button class="btn btn-p" onclick="saveApp()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── CONTEXT MENU ───────────────────────────────────────────────── -->
+<div class="ctx" id="ctx">
+  <div class="ctx-item" onclick="ctxEdit()">✎ &nbsp;编辑</div>
+  <div class="ctx-item danger" onclick="ctxDel()">🗑 &nbsp;删除</div>
+</div>
+
+<!-- ─── SETTINGS ──────────────────────────────────────────────────── -->
+<div class="s-backdrop" id="s-backdrop" onclick="closeSettings()"></div>
+<div class="s-panel" id="s-panel">
+  <div class="s-box">
+    <!-- Left nav -->
+    <div class="s-nav">
+      <div class="s-nav-header">
+        <div class="s-nav-logo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></div>
+        <span class="s-nav-title">系统设置</span>
+      </div>
+      <div class="s-nav-list">
+        <div class="s-nav-item active" onclick="sTab('account')"><span class="s-ico">👤</span>我的信息</div>
+        <div class="s-nav-item" onclick="sTab('panel')"><span class="s-ico">🖥️</span>个性化设置</div>
+        <div class="s-nav-item" onclick="sTab('clock')"><span class="s-ico">🕐</span>时钟组件</div>
+        <div class="s-nav-item" onclick="sTab('wallpaper')"><span class="s-ico">🖼️</span>壁纸设置</div>
+        <div class="s-nav-item" onclick="sTab('users')"><span class="s-ico">👥</span>账号管理</div>
+        <div class="s-nav-item" onclick="sTab('access')"><span class="s-ico">🔓</span>访问控制</div>
+      </div>
+      <div class="s-nav-footer">
+        <button class="s-close-btn" onclick="closeSettings()">✕ 关闭</button>
+      </div>
+    </div>
+
+    <!-- Right content -->
+    <div class="s-content">
+
+      <!-- 我的信息 -->
+      <div class="s-section active" id="st-account">
+        <div class="s-title">我的信息</div>
+        <div class="s-card">
+          <div class="s-row"><label class="s-label">账号</label><input class="s-input" id="s-uname" disabled></div>
+          <div class="s-row"><label class="s-label">昵称</label><input class="s-input" id="s-nick" placeholder="输入昵称"></div>
+          <button class="btn btn-p" onclick="saveNick()">保存昵称</button>
+        </div>
+        <div class="s-card" style="margin-top:14px">
+          <div class="s-title" style="font-size:14px;margin-bottom:14px;padding-bottom:10px">修改密码</div>
+          <div class="s-row"><label class="s-label">旧密码</label><input type="password" class="s-input" id="s-opwd"></div>
+          <div class="s-row"><label class="s-label">新密码</label><input type="password" class="s-input" id="s-npwd"></div>
+          <button class="btn btn-p" onclick="changePwd()">修改密码</button>
+        </div>
+        <div style="margin-top:14px">
+          <button class="btn btn-d" style="width:100%" onclick="doLogout()">退出登录</button>
+        </div>
+      </div>
+
+      <!-- 个性化设置 -->
+      <div class="s-section" id="st-panel">
+        <div class="s-title">个性化设置</div>
+        <div class="s-card">
+          <div class="s-row"><label class="s-label">主机名显示</label><input class="s-input" id="s-host" placeholder="EasyPanel"></div>
+          <div class="s-row">
+            <label class="s-label">LOGO</label>
+            <div class="img-row" style="margin-bottom:8px">
+              <input class="s-input" id="s-logo" placeholder="https://..." oninput="prvLogo()" style="flex:1">
+              <label class="upbtn" for="logo-file">📁</label>
+              <input type="file" id="logo-file" accept="image/*" style="display:none" onchange="uploadLogo(this)">
+            </div>
+            <img id="logo-prv" style="width:48px;height:48px;border-radius:10px;object-fit:cover;display:none">
+          </div>
+          <button class="btn btn-p" onclick="savePanelCfg()">保存</button>
+        </div>
+      </div>
+
+      <!-- 时钟 -->
+      <div class="s-section" id="st-clock">
+        <div class="s-title">时钟组件</div>
+        <div class="s-card">
+          <div class="toggle-row"><div class="toggle-info"><div class="toggle-lbl">显示时间</div></div><label class="sw"><input type="checkbox" id="ck-time" onchange="saveClk()"><span class="sl"></span></label></div>
+          <div class="toggle-row"><div class="toggle-info"><div class="toggle-lbl">显示秒</div></div><label class="sw"><input type="checkbox" id="ck-sec" onchange="saveClk()"><span class="sl"></span></label></div>
+          <div class="toggle-row"><div class="toggle-info"><div class="toggle-lbl">显示日期</div><div class="toggle-sub">月-日</div></div><label class="sw"><input type="checkbox" id="ck-date" onchange="saveClk()"><span class="sl"></span></label></div>
+          <div class="toggle-row"><div class="toggle-info"><div class="toggle-lbl">显示星期</div></div><label class="sw"><input type="checkbox" id="ck-week" onchange="saveClk()"><span class="sl"></span></label></div>
+          <div class="toggle-row"><div class="toggle-info"><div class="toggle-lbl">显示农历</div><div class="toggle-sub">如：正月初一</div></div><label class="sw"><input type="checkbox" id="ck-lunar" onchange="saveClk()"><span class="sl"></span></label></div>
+        </div>
+      </div>
+
+      <!-- 壁纸 -->
+      <div class="s-section" id="st-wallpaper">
+        <div class="s-title">壁纸设置</div>
+        <div class="wp-grid" id="wp-grid"></div>
+        <div class="s-row"><label class="s-label">自定义 URL</label>
+          <div class="img-row">
+            <input class="s-input" id="wp-url" placeholder="https://..." oninput="prvWp(this.value)" style="flex:1">
+            <label class="upbtn" for="wp-file">📁</label>
+            <input type="file" id="wp-file" accept="image/*" style="display:none" onchange="uploadWp(this)">
+          </div>
+        </div>
+        <button class="btn btn-p" onclick="saveWp()">应用壁纸</button>
+      </div>
+
+      <!-- 账号管理 -->
+      <div class="s-section" id="st-users">
+        <div class="s-title">账号管理</div>
+        <div class="info-box">添加用户后，其他用户登录后可各自管理自己的面板数据。</div>
+        <div class="s-card" style="overflow-x:auto">
+          <table class="user-table" id="user-table"></table>
+        </div>
+        <div class="s-card" style="margin-top:14px">
+          <div class="s-title" style="font-size:14px;margin-bottom:14px;padding-bottom:10px">添加用户</div>
+          <div class="s-row"><label class="s-label">账号</label><input class="s-input" id="nu-name"></div>
+          <div class="s-row"><label class="s-label">密码</label><input type="password" class="s-input" id="nu-pwd"></div>
+          <div class="s-row"><label class="s-label">昵称（可选）</label><input class="s-input" id="nu-nick"></div>
+          <button class="btn btn-p" onclick="addUser()">添加</button>
+        </div>
+      </div>
+
+      <!-- 访问控制 -->
+      <div class="s-section" id="st-access">
+        <div class="s-title">访问控制</div>
+        <div class="s-card">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-lbl">公开访问模式</div>
+              <div class="toggle-sub">开启后无需登录即可浏览面板，编辑和设置仍需登录</div>
+            </div>
+            <label class="sw"><input type="checkbox" id="pub-toggle" onchange="setPubMode(this.checked)"><span class="sl"></span></label>
+          </div>
+        </div>
+        <div class="info-box" style="margin-top:12px">
+          <b>私有模式（默认）：</b>访问面板需先登录<br>
+          <b>公开模式：</b>任何人可查看面板，点击设置或右键编辑图标时弹出登录框
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── 农历算法 ─────────────────────────────────────────────────────
+const lunarData=[0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06aa0,0x0a6b6,0x056a0,0x02b40,0x0d9e4,0x0d950,0x0c954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0f92f,0x0e950,0x06c40,0x0d9a6,0x0aad0,0x055b0,0x04ae4,0x0a570,0x05260,0x0f263,0x0d950];
+const lMon=['正','二','三','四','五','六','七','八','九','十','冬','腊'];
+const lDay=['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+
+function leapMon(y){return lunarData[y-1900]&0xf}
+function leapDays(y){return leapMon(y)?((lunarData[y-1900]&0x10000)?30:29):0}
+function monDays(y,m){return(lunarData[y-1900]&(0x10000>>m))?30:29}
+function lYearDays(y){let i,s=348;for(i=0x8000;i>0x8;i>>=1)s+=(lunarData[y-1900]&i)?1:0;return s+leapDays(y)}
+
+function getLunar(date){
+  try{
+    const base=new Date(1900,0,31);
+    let offset=Math.round((date-base)/86400000);
+    let y,temp=0;
+    for(y=1900;y<2101&&temp<=offset;y++) temp+=lYearDays(y);
+    if(temp>offset) y--;
+    offset-=(temp-lYearDays(y));
+    let m,isLeap=false,leap=leapMon(y);
+    for(m=1;m<=12&&offset>0;m++){
+      let days;
+      if(!isLeap&&m==leap+1&&leapDays(y)>0){--m;isLeap=true;days=leapDays(y);}
+      else days=monDays(y,m);
+      if(isLeap&&m==leap+1)isLeap=false;
+      offset-=days;
+    }
+    if(offset==0&&leap==m-1&&leapDays(y)>0){if(isLeap)isLeap=false;else{isLeap=true;--m;}}
+    if(offset<0){offset+=monDays(y,m-1);--m;}
+    return lMon[m-1]+'月'+lDay[offset];
+  }catch(e){return '';}
+}
+
+// ─── STATE ────────────────────────────────────────────────────────
+let apps=[],panelInfo={},clkCfg={show_time:true,show_date:true,show_weekday:true,show_lunar:false,show_seconds:false};
+let curUser=null,pubMode=false,editId=null,iconType='text',sortMode=false,ctxId=null,loginCb=null,clkTimer=null;
+
+const WPS=['https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80','https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80','https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80','https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1920&q=80','https://images.unsplash.com/photo-1501854140801-50d01698950b?w=1920&q=80'];
+
+// ─── API ──────────────────────────────────────────────────────────
+async function api(url,o={}){
+  const r=await fetch(url,{headers:{'Content-Type':'application/json'},credentials:'include',...o});
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||'failed');}
+  return r.json();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────
+async function init(){
+  await loadPanel();
+  await loadApps();
+  startClock();
+  const auth=await api('/api/checkauth').catch(()=>({logged_in:false}));
+  if(auth.logged_in) curUser=auth;
+  if(!pubMode&&!curUser) showLogin('请登录以访问面板',()=>hideLogin());
+}
+
+async function loadPanel(){
+  try{
+    panelInfo=await api('/api/panel');
+    pubMode=panelInfo.public_mode||false;
+    clkCfg=panelInfo.clock||clkCfg;
+    document.getElementById('hero-hostname').textContent=panelInfo.hostname||'EasyPanel';
+    const bg=document.getElementById('wp-bg');
+    if(panelInfo.wallpaper) bg.style.backgroundImage=`url(${panelInfo.wallpaper})`;
+    else bg.style.background='linear-gradient(135deg,#0f2027,#203a43,#2c5364)';
+    const logo=document.getElementById('dash-logo');
+    if(panelInfo.logo){logo.src=panelInfo.logo;logo.style.display='block';}
+  }catch(e){console.error(e);}
+}
+
+async function loadApps(){
+  try{apps=await api('/api/apps');renderApps();}catch(e){console.error(e);}
+}
+
+// ─── LOGIN ────────────────────────────────────────────────────────
+function showLogin(sub,cb){
+  loginCb=cb;
+  document.getElementById('login-sub').textContent=sub||'请登录';
+  document.getElementById('lerr').style.display='none';
+  document.getElementById('lu').value='';document.getElementById('lp').value='';
+  document.getElementById('login-overlay').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('lu').focus(),80);
+}
+function hideLogin(){document.getElementById('login-overlay').classList.add('hidden');loginCb=null;}
+async function doLogin(){
+  const u=document.getElementById('lu').value.trim(),p=document.getElementById('lp').value;
+  document.getElementById('lerr').style.display='none';
+  try{
+    const r=await api('/api/login',{method:'POST',body:JSON.stringify({username:u,password:p})});
+    curUser=r;hideLogin();
+    if(loginCb){loginCb();loginCb=null;}
+  }catch(e){document.getElementById('lerr').style.display='block';}
+}
+document.getElementById('lp').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+async function doLogout(){
+  await api('/api/logout',{method:'POST'}).catch(()=>{});
+  curUser=null;closeSettings();
+  if(!pubMode) showLogin('请登录以访问面板',()=>hideLogin());
+  showToast('已退出登录');
+}
+function requireAuth(cb){
+  if(curUser){cb();return;}
+  showLogin('需要登录才能执行此操作',()=>{hideLogin();cb();});
+}
+document.getElementById('btn-settings').addEventListener('click',()=>requireAuth(openSettings));
+
+// ─── CLOCK ────────────────────────────────────────────────────────
+function startClock(){if(clkTimer)clearInterval(clkTimer);tickClock();clkTimer=setInterval(tickClock,1000);}
+function tickClock(){
+  const now=new Date(),parts=[];
+  const pad=n=>String(n).padStart(2,'0');
+  if(clkCfg.show_time){
+    let t=`${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    if(clkCfg.show_seconds) t+=`:${pad(now.getSeconds())}`;
+    parts.push(`<span>${t}</span>`);
+  }
+  const days=['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+  const dateStr=`${now.getMonth()+1}-${now.getDate()}`;
+  const items=[];
+  if(clkCfg.show_date) items.push(dateStr);
+  if(clkCfg.show_weekday) items.push(days[now.getDay()]);
+  if(clkCfg.show_lunar){const l=getLunar(now);if(l)items.push(l);}
+  if(items.length) parts.push(`<span class="div">|</span><span>${items.join(' &nbsp;')}</span>`);
+  document.getElementById('hero-clock').innerHTML=parts.join('');
+}
+
+// ─── RENDER APPS ─────────────────────────────────────────────────
+function renderApps(){
+  const wrap=document.getElementById('apps-inner');
+  wrap.innerHTML='';
+
+  const row=document.createElement('div');
+  row.className='group-row';
+  row.innerHTML=`
+    <div class="group-lbl">APP</div>
+    <div class="group-tools">
+      <button class="tool-btn" id="btn-add-app" title="添加应用">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button class="tool-btn" id="btn-sort" title="排序">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+      </button>
+    </div>`;
+  wrap.appendChild(row);
+
+  const sortBar=document.createElement('div');
+  sortBar.id='sort-bar';sortBar.style.display='none';sortBar.style.display='none';
+  sortBar.style.cssText='display:none;margin-bottom:12px;gap:8px;flex-wrap:wrap;';
+  sortBar.innerHTML=`<button class="sort-btn" onclick="exitSort(true)">💾 保存排序</button><button class="sort-btn" style="background:rgba(255,255,255,.6)" onclick="exitSort(false)">✕ 取消</button>`;
+  wrap.appendChild(sortBar);
+
+  const grid=document.createElement('div');
+  grid.className='apps-grid';grid.id='apps-grid';
+  apps.forEach(a=>grid.appendChild(mkCard(a)));
+  wrap.appendChild(grid);
+
+  document.getElementById('btn-add-app').onclick=()=>requireAuth(openAdd);
+  document.getElementById('btn-sort').onclick=()=>requireAuth(enterSort);
+}
+
+function mkCard(app){
+  const card=document.createElement('div');
+  card.className='app-card';card.dataset.id=app.id;
+  const title=app.title||'?';
+  const fb=title.substring(0,2);
+  let ico='';
+  if(app.icon_type==='image'&&app.icon_image){
+    ico=`<img class="app-icon-img" src="${app.icon_image}" alt="${title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="app-icon-txt" style="display:none">${fb}</div>`;
+  } else {
+    const t=(app.icon_text&&app.icon_text.trim())?app.icon_text.trim():fb;
+    ico=`<div class="app-icon-txt">${t}</div>`;
+  }
+  const wrap=document.createElement('div');wrap.className='app-icon-wrap';wrap.innerHTML=ico;
+  const nm=document.createElement('div');nm.className='app-name';nm.textContent=title;
+  card.appendChild(wrap);card.appendChild(nm);
+
+  wrap.addEventListener('click',()=>{
+    if(sortMode)return;
+    if(!app.url)return;
+    app.open_type==='current'?(window.location.href=app.url):window.open(app.url,'_blank');
+  });
+  card.addEventListener('contextmenu',e=>{e.preventDefault();if(sortMode)return;requireAuth(()=>showCtx(e.clientX,e.clientY,app.id));});
+
+  card.draggable=true;
+  card.addEventListener('dragstart',e=>{if(!sortMode){e.preventDefault();return;}e.dataTransfer.effectAllowed='move';card.style.opacity='.35';card.dataset.drag='1';});
+  card.addEventListener('dragend',()=>{card.style.opacity='';delete card.dataset.drag;document.querySelectorAll('.app-card').forEach(c=>c.classList.remove('drag-over'));});
+  card.addEventListener('dragover',e=>{if(!sortMode)return;e.preventDefault();card.classList.add('drag-over');});
+  card.addEventListener('dragleave',()=>card.classList.remove('drag-over'));
+  card.addEventListener('drop',e=>{e.preventDefault();card.classList.remove('drag-over');const src=document.querySelector('.app-card[data-drag="1"]');if(!src||src===card)return;reorderLocal(src.dataset.id,card.dataset.id);});
+  return card;
+}
+
+function reorderLocal(si,di){
+  const a=apps.findIndex(x=>x.id===si),b=apps.findIndex(x=>x.id===di);
+  if(a<0||b<0)return;
+  const [it]=apps.splice(a,1);apps.splice(b,0,it);
+  renderApps();enterSort();
+}
+
+// ─── SORT MODE ───────────────────────────────────────────────────
+function enterSort(){
+  sortMode=true;
+  const sb=document.getElementById('sort-bar');if(sb)sb.style.display='flex';
+  document.querySelectorAll('.app-card').forEach(c=>c.classList.add('sort-mode'));
+  const btn=document.getElementById('btn-sort');if(btn)btn.classList.add('active');
+}
+async function exitSort(save){
+  sortMode=false;
+  const sb=document.getElementById('sort-bar');if(sb)sb.style.display='none';
+  document.querySelectorAll('.app-card').forEach(c=>c.classList.remove('sort-mode'));
+  if(save){
+    try{await api('/api/apps/reorder',{method:'POST',body:JSON.stringify({ids:apps.map(a=>a.id)})});showToast('排序已保存 ✓');}
+    catch(e){showToast('保存失败');}
+  } else {await loadApps();}
+}
+
+// ─── CONTEXT MENU ────────────────────────────────────────────────
+function showCtx(x,y,id){
+  ctxId=id;const m=document.getElementById('ctx');m.classList.add('show');
+  const w=140,h=90;
+  m.style.left=(x+w>innerWidth?x-w:x)+'px';
+  m.style.top=(y+h>innerHeight?y-h:y)+'px';
+}
+function hideCtx(){document.getElementById('ctx').classList.remove('show');ctxId=null;}
+function ctxEdit(){hideCtx();if(ctxId)openEdit(ctxId);}
+async function ctxDel(){
+  hideCtx();if(!ctxId)return;
+  if(!confirm('确认删除此应用？'))return;
+  try{await api(`/api/apps/${ctxId}`,{method:'DELETE'});await loadApps();showToast('已删除');}
+  catch(e){showToast('删除失败');}
+}
+document.addEventListener('click',hideCtx);
+document.addEventListener('scroll',hideCtx,true);
+
+// ─── APP MODAL ───────────────────────────────────────────────────
+function openAdd(){editId=null;document.getElementById('modal-title').textContent='添加应用';document.getElementById('modal-del').style.display='none';resetModal();document.getElementById('app-modal').classList.add('show');}
+function openEdit(id){
+  const a=apps.find(x=>x.id===id);if(!a)return;
+  editId=id;document.getElementById('modal-title').textContent='编辑应用';document.getElementById('modal-del').style.display='block';
+  setIT(a.icon_type||'text');
+  document.getElementById('icon-txt').value=a.icon_text||'';
+  document.getElementById('icon-url').value=a.icon_image||'';
+  document.getElementById('app-title').value=a.title||'';
+  document.getElementById('app-url').value=a.url||'';
+  document.getElementById('app-open').value=a.open_type||'new_tab';
+  updPrev();document.getElementById('app-modal').classList.add('show');
+}
+function closeModal(){document.getElementById('app-modal').classList.remove('show');}
+function resetModal(){setIT('text');['icon-txt','icon-url','app-title','app-url'].forEach(id=>document.getElementById(id).value='');document.getElementById('app-open').value='new_tab';updPrev();}
+function setIT(t){
+  iconType=t;
+  document.querySelectorAll('.itab').forEach((el,i)=>el.classList.toggle('active',(i===0&&t==='text')||(i===1&&t==='image')));
+  document.getElementById('it-text').style.display=t==='text'?'block':'none';
+  document.getElementById('it-img').style.display=t==='image'?'block':'none';
+  updPrev();
+}
+function updPrev(){
+  const title=document.getElementById('app-title').value||'应用名称';
+  const url=document.getElementById('app-url').value||'https://...';
+  const txt=document.getElementById('icon-txt').value||title.substring(0,2);
+  const img=document.getElementById('icon-url').value;
+  document.getElementById('prev-title').textContent=title;
+  document.getElementById('prev-url').textContent=url;
+  const ico=document.getElementById('prev-ico');
+  if(iconType==='image'&&img) ico.innerHTML=`<img src="${img}" style="width:100%;height:100%;object-fit:cover;border-radius:11px" onerror="this.parentElement.textContent='${txt.substring(0,2)}'">`;
+  else ico.textContent=txt.substring(0,2);
+}
+async function uploadIcon(inp){
+  if(!inp.files[0])return;
+  const fd=new FormData();fd.append('image',inp.files[0]);
+  try{const r=await fetch('/api/upload',{method:'POST',body:fd,credentials:'include'});const d=await r.json();document.getElementById('icon-url').value=d.url;updPrev();}
+  catch(e){showToast('上传失败');}
+}
+async function saveApp(){
+  const title=document.getElementById('app-title').value.trim();
+  const url=document.getElementById('app-url').value.trim();
+  if(!title||!url){showToast('请填写标题和地址');return;}
+  const data={title,url,icon_type:iconType,icon_text:document.getElementById('icon-txt').value,icon_image:document.getElementById('icon-url').value,open_type:document.getElementById('app-open').value};
+  try{
+    if(editId) await api(`/api/apps/${editId}`,{method:'PUT',body:JSON.stringify(data)});
+    else await api('/api/apps',{method:'POST',body:JSON.stringify(data)});
+    closeModal();await loadApps();showToast('保存成功 ✓');
+  }catch(e){showToast('保存失败: '+e.message);}
+}
+async function delApp(){
+  if(!editId||!confirm('确认删除？'))return;
+  try{await api(`/api/apps/${editId}`,{method:'DELETE'});closeModal();await loadApps();showToast('已删除');}
+  catch(e){showToast('删除失败');}
+}
+document.getElementById('app-modal').addEventListener('click',e=>{if(e.target===document.getElementById('app-modal'))closeModal();});
+
+// ─── SETTINGS ────────────────────────────────────────────────────
+async function openSettings(){
+  if(curUser){document.getElementById('s-uname').value=curUser.username||'';document.getElementById('s-nick').value=curUser.nickname||'';}
+  document.getElementById('s-host').value=panelInfo.hostname||'';
+  document.getElementById('s-logo').value=panelInfo.logo||'';
+  if(panelInfo.logo){document.getElementById('logo-prv').src=panelInfo.logo;document.getElementById('logo-prv').style.display='block';}
+  document.getElementById('wp-url').value=panelInfo.wallpaper||'';
+  const c=clkCfg;
+  document.getElementById('ck-time').checked=c.show_time!==false;
+  document.getElementById('ck-sec').checked=!!c.show_seconds;
+  document.getElementById('ck-date').checked=c.show_date!==false;
+  document.getElementById('ck-week').checked=c.show_weekday!==false;
+  document.getElementById('ck-lunar').checked=!!c.show_lunar;
+  document.getElementById('pub-toggle').checked=pubMode;
+  buildWpGrid();
+  await loadUsers();
+  document.getElementById('s-backdrop').classList.add('show');
+  document.getElementById('s-panel').classList.add('open');
+}
+function closeSettings(){document.getElementById('s-backdrop').classList.remove('show');document.getElementById('s-panel').classList.remove('open');}
+function sTab(t){
+  const tabs=['account','panel','clock','wallpaper','users','access'];
+  tabs.forEach((x,i)=>{
+    document.querySelectorAll('.s-nav-item')[i].classList.toggle('active',x===t);
+    document.getElementById('st-'+x).classList.toggle('active',x===t);
+  });
+}
+
+async function saveNick(){
+  const n=document.getElementById('s-nick').value.trim();
+  try{await api('/api/me/nickname',{method:'PUT',body:JSON.stringify({nickname:n})});if(curUser)curUser.nickname=n;showToast('昵称已保存 ✓');}
+  catch(e){showToast('保存失败');}
+}
+async function changePwd(){
+  const o=document.getElementById('s-opwd').value,n=document.getElementById('s-npwd').value;
+  if(!o||!n){showToast('请填写密码');return;}
+  try{await api('/api/me/password',{method:'PUT',body:JSON.stringify({old_password:o,new_password:n})});document.getElementById('s-opwd').value='';document.getElementById('s-npwd').value='';showToast('密码已修改 ✓');}
+  catch(e){showToast('修改失败: '+e.message);}
+}
+async function savePanelCfg(){
+  const s={hostname:document.getElementById('s-host').value.trim(),logo:document.getElementById('s-logo').value.trim(),wallpaper:panelInfo.wallpaper||'',clock:clkCfg};
+  try{await api('/api/settings',{method:'PUT',body:JSON.stringify(s)});await loadPanel();showToast('已保存 ✓');}
+  catch(e){showToast('保存失败');}
+}
+function prvLogo(){const u=document.getElementById('s-logo').value;if(u){document.getElementById('logo-prv').src=u;document.getElementById('logo-prv').style.display='block';}}
+async function uploadLogo(inp){
+  if(!inp.files[0])return;
+  const fd=new FormData();fd.append('logo',inp.files[0]);
+  try{const r=await fetch('/api/upload/logo',{method:'POST',body:fd,credentials:'include'});const d=await r.json();document.getElementById('s-logo').value=d.url;document.getElementById('logo-prv').src=d.url;document.getElementById('logo-prv').style.display='block';}
+  catch(e){showToast('上传失败');}
+}
+async function saveClk(){
+  clkCfg={show_time:document.getElementById('ck-time').checked,show_seconds:document.getElementById('ck-sec').checked,show_date:document.getElementById('ck-date').checked,show_weekday:document.getElementById('ck-week').checked,show_lunar:document.getElementById('ck-lunar').checked};
+  const s={hostname:panelInfo.hostname||'',logo:panelInfo.logo||'',wallpaper:panelInfo.wallpaper||'',clock:clkCfg};
+  try{await api('/api/settings',{method:'PUT',body:JSON.stringify(s)});tickClock();}catch(e){}
+}
+
+// Wallpaper
+function buildWpGrid(){
+  const g=document.getElementById('wp-grid');g.innerHTML='';
+  WPS.forEach(url=>{
+    const d=document.createElement('div');d.className='wp-thumb'+(panelInfo.wallpaper===url?' sel':'');
+    d.onclick=()=>selWp(url);d.innerHTML=`<img src="${url}" loading="lazy">`;g.appendChild(d);
+  });
+}
+function selWp(url){document.getElementById('wp-url').value=url;prvWp(url);document.querySelectorAll('.wp-thumb').forEach(el=>el.classList.remove('sel'));}
+function prvWp(url){const bg=document.getElementById('wp-bg');if(url)bg.style.backgroundImage=`url(${url})`;else bg.style.background='linear-gradient(135deg,#0f2027,#203a43,#2c5364)';}
+async function uploadWp(inp){
+  if(!inp.files[0])return;
+  const fd=new FormData();fd.append('wallpaper',inp.files[0]);
+  try{const r=await fetch('/api/upload/wallpaper',{method:'POST',body:fd,credentials:'include'});const d=await r.json();document.getElementById('wp-url').value=d.url;prvWp(d.url);showToast('上传成功');}
+  catch(e){showToast('上传失败');}
+}
+async function saveWp(){
+  const url=document.getElementById('wp-url').value.trim();
+  const s={hostname:panelInfo.hostname||'',logo:panelInfo.logo||'',wallpaper:url,clock:clkCfg};
+  try{await api('/api/settings',{method:'PUT',body:JSON.stringify(s)});panelInfo.wallpaper=url;showToast('壁纸已保存 ✓');}
+  catch(e){showToast('保存失败');}
+}
+
+// Users
+async function loadUsers(){
+  try{
+    const us=await api('/api/users');
+    document.getElementById('user-table').innerHTML=`
+      <thead><tr><th>账号</th><th>昵称</th><th>角色</th><th>操作</th></tr></thead>
+      <tbody>${us.map(u=>`<tr>
+        <td>${u.username}${u.username===curUser?.username?'<span class="badge badge-cur">当前</span>':''}</td>
+        <td>${u.nickname||'-'}</td>
+        <td><span class="badge ${u.is_admin?'badge-admin':'badge-user'}">${u.is_admin?'管理员':'用户'}</span></td>
+        <td>${u.username!==curUser?.username?`<button class="btn btn-d" style="padding:4px 10px;font-size:12px" onclick="rmUser('${u.username}')">删除</button>`:'-'}</td>
+      </tr>`).join('')}</tbody>`;
+  }catch(e){console.error(e);}
+}
+async function addUser(){
+  const n=document.getElementById('nu-name').value.trim(),p=document.getElementById('nu-pwd').value,k=document.getElementById('nu-nick').value.trim();
+  if(!n||!p){showToast('请填写账号和密码');return;}
+  try{await api('/api/users',{method:'POST',body:JSON.stringify({username:n,password:p,nickname:k})});document.getElementById('nu-name').value='';document.getElementById('nu-pwd').value='';document.getElementById('nu-nick').value='';await loadUsers();showToast('已添加 ✓');}
+  catch(e){showToast('添加失败: '+e.message);}
+}
+async function rmUser(u){
+  if(!confirm(`确认删除用户 ${u}？`))return;
+  try{await api(`/api/users/${u}`,{method:'DELETE'});await loadUsers();showToast('已删除');}
+  catch(e){showToast('删除失败');}
+}
+async function setPubMode(v){
+  try{await api('/api/publicmode',{method:'PUT',body:JSON.stringify({public_mode:v})});pubMode=v;showToast(v?'已开启公开访问':'已切换为私有模式');}
+  catch(e){showToast('设置失败');document.getElementById('pub-toggle').checked=!v;}
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────
+let toastT;
+function showToast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2400);}
+
+init();
+</script>
+</body>
+</html>
