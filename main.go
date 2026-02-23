@@ -39,6 +39,7 @@ func main() {
 	}
 
 	fmt.Printf("\n🚀 EasyPanel running on http://0.0.0.0:%d\n", config.Main.Port)
+	fmt.Printf("   Default credentials: admin / admin\n\n")
 
 	r := gin.Default()
 
@@ -49,6 +50,7 @@ func main() {
 	r.GET("/api/panel", handler.GetPanelInfo)
 	r.GET("/api/apps", handler.GetApps)
 	r.GET("/api/checkauth", handler.CheckAuth)
+	r.GET("/api/fetch-icon", handler.FetchIcon)
 
 	// ── Protected API ──────────────────────────────────────────
 	auth := r.Group("/api", authMiddleware())
