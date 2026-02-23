@@ -1,13 +1,6 @@
 <template>
   <div class="login-overlay" v-if="visible">
     <div class="login-card">
-      <div class="login-logo-wrap">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="3" y="6" width="18" height="2.5" rx="1.25" fill="white"/>
-          <rect x="3" y="11" width="13" height="2.5" rx="1.25" fill="white" fill-opacity="0.75"/>
-          <rect x="3" y="16" width="15.5" height="2.5" rx="1.25" fill="white" fill-opacity="0.5"/>
-        </svg>
-      </div>
       <div class="login-title"><span>EasyPanel</span></div>
       <div class="login-sub">{{ subtitle }}</div>
       <div class="fg">
@@ -83,7 +76,7 @@ defineExpose({ open, close })
 }
 .login-card {
   background: rgba(255,255,255,.9); backdrop-filter: blur(30px);
-  border-radius: 24px; padding: 38px 42px 30px; width: 380px; max-width: 92vw;
+  border-radius: 24px; padding: 44px 42px 30px; width: 380px; max-width: 92vw;
   box-shadow: 0 32px 80px rgba(168,85,247,.18), 0 2px 0 rgba(255,255,255,.8) inset;
   border: 1px solid rgba(255,255,255,.7); animation: pop-in .24s ease;
 }
@@ -93,7 +86,7 @@ defineExpose({ open, close })
   display: flex; align-items: center; justify-content: center; margin-bottom: 18px;
   box-shadow: 0 6px 20px color-mix(in srgb, var(--h1) 40%, transparent);
 }
-.login-title { font-size: 26px; font-weight: 800; text-align: center; margin-bottom: 4px; }
+.login-title { font-size: 36px; font-weight: 900; text-align: center; margin-bottom: 6px; }
 .login-title span { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .login-sub { font-size: 13px; color: #94a3b8; text-align: center; margin-bottom: 24px; }
 .fg { position: relative; margin-bottom: 12px; }
