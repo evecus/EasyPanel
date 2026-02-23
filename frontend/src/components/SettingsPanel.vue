@@ -2,7 +2,7 @@
   <template v-if="visible">
     <div class="s-backdrop" @click="close"></div>
     <div class="s-panel">
-      <div class="s-box" :style="{ fontFamily: resolveFont(fonts.ui) }">
+      <div class="s-box" :style="{ fontFamily: resolveFont(form.fonts.ui) }">
         <button class="s-close-top" @click="close" title="关闭"></button>
 
         <!-- Nav sidebar -->
