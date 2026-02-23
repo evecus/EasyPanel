@@ -124,7 +124,7 @@ func createDefaultMain() error {
 	rand.Read(secret)
 	hash, _ := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
 	Main = &MainConfig{
-		Port:       3088,
+		Port:       3000,
 		JWTSecret:  hex.EncodeToString(secret),
 		PublicMode: false,
 		Users:      []User{{Username: "admin", Password: string(hash), Nickname: "Admin", IsAdmin: true}},
@@ -179,11 +179,11 @@ func loadSettings() error {
 			Wallpaper:    "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1920&q=80",
 			Theme:        "purple-pink",
 			Language:     "zh",
-			HostnameSize: 56,
-			ClockSize:    16,
-			IconSize:     78,
-			AppNameSize:  12,
-			IconRadius:   26,
+			HostnameSize: 76,
+			ClockSize:    24,
+			IconSize:     64,
+			AppNameSize:  14,
+			IconRadius:   25,
 			IconGap:      22,
 			SidePadding:  52,
 			FontHostname: "system",
