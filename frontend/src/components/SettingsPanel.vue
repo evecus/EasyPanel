@@ -221,7 +221,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, nextTick } from 'vue'
 import { useI18n, lang } from '../composables/useI18n.js'
 import { apiCall } from '../composables/useApi.js'
 import { THEMES, WPS, FONT_OPTIONS, curThemeId, applyThemeCss } from '../composables/useTheme.js'
@@ -317,8 +317,10 @@ async function open() {
   Object.assign(form.fonts, props.fontSet)
   Object.assign(form.clock, props.clkCfg)
   form.nuName = ''; form.nuPwd = ''; form.nuNick = ''
-  visible.value = true   // 先显示面板，不等 loadUsers
-  loadUsers()            // 异步加载用户列表，不阻塞打开
+  // 用 setTimeout 延迟到当前点击事件完全结束后再显示 backdrop，避免立即被关闭
+  await new Promise(r => setTimeout(r, 0))
+  visible.value = true
+  loadUsers()
 }
 function close() { visible.value = false }
 
