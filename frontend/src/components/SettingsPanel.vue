@@ -259,15 +259,15 @@ const TABS = [
 ]
 
 const sizeSliders = [
-  { key: 'hostnameSize', label: 'lblHostnameSize', min: 24, max: 96,  unit: 'px' },
-  { key: 'clockSize',    label: 'lblClockSize',    min: 10, max: 36,  unit: 'px' },
-  { key: 'iconSize',     label: 'lblIconSize',     min: 40, max: 130, unit: 'px' },
-  { key: 'appNameSize',  label: 'lblAppnameSize',  min: 8,  max: 22,  unit: 'px' },
+  { key: 'hostnameSize', label: 'lblHostnameSize', min: 56, max: 96,  unit: 'px' },
+  { key: 'clockSize',    label: 'lblClockSize',    min: 10, max: 38,  unit: 'px' },
+  { key: 'iconSize',     label: 'lblIconSize',     min: 44, max: 84,  unit: 'px' },
+  { key: 'appNameSize',  label: 'lblAppnameSize',  min: 6,  max: 22,  unit: 'px' },
 ]
 const iconSliders = [
   { key: 'iconRadius',  label: 'iconRadius',  min: 0,  max: 50,  unit: '%' },
-  { key: 'iconGap',     label: 'iconGap',     min: 8,  max: 60,  unit: 'px' },
-  { key: 'sidePadding', label: 'sidePadding', min: 10, max: 120, unit: 'px' },
+  { key: 'iconGap',     label: 'iconGap',     min: 8,  max: 36,  unit: 'px' },
+  { key: 'sidePadding', label: 'sidePadding', min: 32, max: 72,  unit: 'px' },
 ]
 const fontFields = [
   { key: 'hostname', label: 'fontHostname' },
