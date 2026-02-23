@@ -38,5 +38,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: easypanel-linux-amd64
-          path: easypanel
+          name: easypanel-${{ matrix.goos }}-${{ matrix.goarch }}  # 已经有了，检查是否真的不同
+          path: easypanel-${{ matrix.goos }}-${{ matrix.goarch }}
