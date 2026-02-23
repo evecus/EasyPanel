@@ -206,18 +206,18 @@ function showToast(msg) { toast.value?.show(msg) }
 
 async function requireAuth(cb) {
   // 内存里已有用户，直接放行
-  if (curUser.value) { cb(); return }
+  if (curUser.value) { await cb(); return }
   // 内存没有，但 cookie 里可能有有效 token，先验证一次
   try {
     const auth = await apiCall('/api/checkauth')
     if (auth.logged_in) {
-      curUser.value = auth   // 恢复用户状态，不弹框
-      cb()
+      curUser.value = auth
+      await cb()
       return
     }
-  } catch {}
+  } catch (e) { console.error('checkauth error:', e) }
   // cookie 也无效，才弹登录框
-  loginModal.value?.open(t('loginRequired'), (user) => { curUser.value = user; cb() })
+  loginModal.value?.open(t('loginRequired'), async (user) => { curUser.value = user; await cb() })
 }
 
 async function doLogout() {
@@ -229,8 +229,8 @@ async function doLogout() {
 }
 
 // ── Settings ────────────────────────────────────────────────────
-function onSettingsClick() {
-  requireAuth(() => settingsPanel.value?.open())
+async function onSettingsClick() {
+  await requireAuth(async () => { await settingsPanel.value?.open() })
 }
 
 // ── App actions ─────────────────────────────────────────────────
