@@ -50,6 +50,13 @@ const STRINGS = {
     iconRadius:'图标圆角',iconGap:'图标间距',sidePadding:'侧边距',
     fontHostname:'主机名字体',fontClock:'时间字体',fontAppname:'应用名称字体',fontUi:'设置界面字体',
     saveFonts:'保存字体',
+    urlLanLbl:'内网地址',urlWanLbl:'公网地址',
+    urlHint:'有 http:// 或 https:// 会原样使用，否则继承当前页面协议',
+    fillTitle:'请填写标题',fillAtLeastOneUrl:'内网地址和公网地址至少填写一个',
+    lblNetMode:'默认访问方式',subNetMode:'点击图标时优先使用哪个地址',
+    netLan:'内网',netWan:'公网',
+    netSwitchedLan:'已切换为内网访问',netSwitchedWan:'已切换为公网访问',
+    switchToLan:'切换为内网访问',switchToWan:'切换为公网访问',
   },
   en: {
     loginSub:'Please sign in to continue',loginBtn:'Sign In',loginErr:'Invalid username or password',
@@ -100,6 +107,13 @@ const STRINGS = {
     iconRadius:'Icon Radius',iconGap:'Icon Gap',sidePadding:'Side Padding',
     fontHostname:'Hostname Font',fontClock:'Clock Font',fontAppname:'App Name Font',fontUi:'UI Font',
     saveFonts:'Save Fonts',
+    urlLanLbl:'LAN Address',urlWanLbl:'WAN Address',
+    urlHint:'With http:// or https:// will be used as-is, otherwise inherits current page protocol',
+    fillTitle:'Please enter a title',fillAtLeastOneUrl:'Please fill in at least one address (LAN or WAN)',
+    lblNetMode:'Default Access',subNetMode:'Which address to use when clicking an app',
+    netLan:'LAN',netWan:'WAN',
+    netSwitchedLan:'Switched to LAN',netSwitchedWan:'Switched to WAN',
+    switchToLan:'Switch to LAN',switchToWan:'Switch to WAN',
   }
 }
 
