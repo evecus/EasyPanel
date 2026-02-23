@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>EasyPanel</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--h1:#a855f7;--h2:#ec4899;--grad:linear-gradient(135deg,var(--h1),var(--h2));--text:#1e1b2e;--sub:#6b7280;--border:#ede8f5;--bg:#faf8ff;--tr:.2s cubic-bezier(.4,0,.2,1);}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;min-height:100vh;overflow-x:hidden;-webkit-tap-highlight-color:transparent;background:var(--bg)}
+.grad-text{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#login-overlay{position:fixed;inset:0;z-index:800;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.38);backdrop-filter:blur(12px)}
+.login-card{background:rgba(255,255,255,.9);backdrop-filter:blur(30px);border-radius:24px;padding:38px 42px 30px;width:380px;max-width:92vw;box-shadow:0 32px 80px rgba(168,85,247,.18),0 2px 0 rgba(255,255,255,.8) inset;border:1px solid rgba(255,255,255,.7);animation:pop-in .24s ease}
+@keyframes pop-in{from{transform:scale(.93) translateY(12px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.login-logo-wrap{width:48px;height:48px;background:var(--grad);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:0 6px 20px color-mix(in srgb,var(--h1) 40%,transparent)}
+.login-title{font-size:26px;font-weight:800;text-align:center;margin-bottom:4px}
+.login-title span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.login-sub{font-size:13px;color:#94a3b8;text-align:center;margin-bottom:24px}
+.fg{position:relative;margin-bottom:12px}
+.fg input{width:100%;padding:13px 14px 13px 42px;border:1.5px solid #ede8f5;border-radius:13px;font-size:15px;background:rgba(250,248,255,.8);outline:none;color:#1e1b2e;transition:all var(--tr);font-family:inherit}
+.fg input:focus{border-color:var(--h1);background:white;box-shadow:0 0 0 3px color-mix(in srgb,var(--h1) 12%,transparent)}
+.fg .fi{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:16px}
+.login-btn{width:100%;padding:14px;background:var(--grad);border:none;border-radius:13px;font-size:15px;font-weight:700;cursor:pointer;color:white;box-shadow:0 6px 20px color-mix(in srgb,var(--h1) 35%,transparent);transition:all var(--tr);margin-top:4px}
+.login-btn:hover{transform:translateY(-2px)}.login-btn:active{transform:translateY(0)}
+.login-err{color:#ef4444;font-size:13px;text-align:center;margin-top:8px}
+.login-foot{text-align:center;margin-top:18px;font-size:12px;color:#94a3b8}
+.s-card-title{font-size:12px;font-weight:700;color:var(--h1);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.s-sel{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:11px;font-size:14px;background:#faf8ff;color:var(--text);outline:none;cursor:pointer;transition:border-color var(--tr)}
+.s-sel:focus{border-color:var(--h1)}
+#dashboard{min-height:100vh;position:relative}
+.wp-bg{position:fixed;inset:0;z-index:0;background-size:cover;background-position:center;transition:background .6s}
+.wp-overlay{position:fixed;inset:0;z-index:0;background:rgba(0,0,0,.22)}
+.dash-content{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
+.dash-header{display:flex;justify-content:flex-start;align-items:flex-start;padding:22px 52px 0}
+.dash-logo{height:34px;width:auto;border-radius:8px;object-fit:contain}
+.icon-btn{position:fixed;top:22px;right:52px;z-index:10;width:40px;height:40px;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:white;font-size:17px;transition:all var(--tr);border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.15);backdrop-filter:blur(12px)}
+.icon-btn:hover{background:rgba(255,255,255,.28);transform:translateY(-1px)}
+.hero{text-align:center;padding:32px 20px 40px;color:white;flex-shrink:0}
+.hero-hostname{font-size:56px;font-weight:900;letter-spacing:-1.5px;line-height:1.05;margin-bottom:10px;text-shadow:0 2px 24px rgba(0,0,0,.28)}
+.hero-clock{font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;opacity:.9}
+.hero-clock .div{opacity:.35}
+.apps-outer{flex:1;padding:0 52px 52px;display:flex;justify-content:center}
+.apps-inner{width:100%;max-width:1100px}
+.group-row{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.group-lbl{color:rgba(255,255,255,.92);font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:2px;text-shadow:0 1px 6px rgba(0,0,0,.3)}
+.group-tools{display:none;align-items:center;gap:6px}
+.group-row:hover .group-tools{display:flex}
+.tool-btn{width:30px;height:30px;border-radius:9px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);backdrop-filter:blur(8px);cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.9);transition:all var(--tr)}
+.tool-btn:hover,.tool-btn.active{background:rgba(255,255,255,.28);border-color:white}
+.sort-bar{display:flex;margin-bottom:14px;gap:8px;flex-wrap:wrap}
+.sort-btn{padding:8px 18px;background:rgba(255,255,255,.88);color:#1e1b2e;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;box-shadow:0 4px 14px rgba(0,0,0,.14);transition:all var(--tr)}
+.sort-btn:hover{background:white;transform:translateY(-1px)}
+.apps-grid{display:flex;flex-wrap:wrap;gap:22px;justify-content:flex-start}
+.app-card{display:flex;flex-direction:column;align-items:center;gap:9px;cursor:pointer;width:92px;user-select:none;-webkit-user-select:none}
+.app-icon-wrap{width:78px;height:78px;border-radius:20px;overflow:hidden;transition:transform var(--tr),box-shadow var(--tr);box-shadow:0 6px 20px rgba(0,0,0,.24),0 1px 0 rgba(255,255,255,.2) inset}
+.app-card:not(.sort-mode):hover .app-icon-wrap{transform:translateY(-6px) scale(1.07);box-shadow:0 16px 36px rgba(0,0,0,.32),0 1px 0 rgba(255,255,255,.2) inset}
+.app-icon-img{width:100%;height:100%;object-fit:cover;display:block}
+.app-icon-txt{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--grad);font-size:26px;font-weight:800;color:white;text-shadow:0 1px 4px rgba(0,0,0,.25)}
+.app-name{font-size:12px;color:rgba(255,255,255,.96);text-align:center;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.4);max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app-card.sort-mode{animation:wiggle .4s ease infinite alternate}
+@keyframes wiggle{from{transform:rotate(-1.5deg) scale(.97)}to{transform:rotate(1.5deg) scale(.97)}}
+.app-card.sort-mode .app-icon-wrap{border:2.5px dashed rgba(255,255,255,.65);transform:none!important;box-shadow:none!important}
+.app-card.drag-over .app-icon-wrap{border-color:white;background:rgba(255,255,255,.12)}
+.ctx{position:fixed;z-index:9999;background:rgba(255,255,255,.97);backdrop-filter:blur(20px);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.18),0 1px 0 rgba(255,255,255,.8) inset;padding:5px;min-width:140px;border:1px solid rgba(255,255,255,.6);animation:pop-in .14s ease}
+.ctx-item{display:flex;align-items:center;gap:9px;padding:10px 14px;border-radius:9px;cursor:pointer;font-size:14px;font-weight:500;color:#1e1b2e;transition:background var(--tr);user-select:none}
+.ctx-item:hover{background:rgba(168,85,247,.08)}
+.ctx-item.danger{color:#ef4444}.ctx-item.danger:hover{background:#fef2f2}
+.modal-overlay{position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.4);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:white;border-radius:22px;padding:28px;width:460px;max-width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(168,85,247,.18);animation:pop-in .2s ease;border:1px solid rgba(168,85,247,.1)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.modal-title{font-size:17px;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.close-btn{width:32px;height:32px;border:none;background:#f5f3ff;border-radius:9px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;color:#64748b;transition:all var(--tr)}
+.close-btn:hover{background:#ede9fe}
+.preview-box{background:linear-gradient(135deg,#faf5ff,#fdf2f8);border-radius:14px;padding:14px;margin-bottom:20px;display:flex;align-items:center;gap:14px;border:1px solid rgba(168,85,247,.1)}
+.preview-ico{width:52px;height:52px;border-radius:14px;overflow:hidden;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:white;flex-shrink:0}
+.preview-ico img{width:100%;height:100%;object-fit:cover}
+.preview-t{font-size:14px;font-weight:700;color:#1e1b2e}
+.preview-u{font-size:12px;color:#94a3b8;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px}
+.fl{display:block;font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px}
+.fi2{width:100%;padding:11px 13px;border:1.5px solid #ede8f5;border-radius:11px;font-size:14px;color:#1e1b2e;outline:none;transition:all var(--tr);background:#faf8ff;font-family:inherit}
+.fi2:focus{border-color:var(--h1);background:white;box-shadow:0 0 0 3px color-mix(in srgb,var(--h1) 10%,transparent)}
+.fr{margin-bottom:14px}
+.itabs{display:flex;gap:3px;background:#f5f3ff;border-radius:11px;padding:3px;margin-bottom:10px}
+.itab{flex:1;padding:8px;border:none;background:transparent;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:#94a3b8;transition:all var(--tr)}
+.itab.active{background:white;color:var(--h1);box-shadow:0 2px 8px rgba(168,85,247,.15)}
+.img-row{display:flex;gap:7px;align-items:center}
+.img-row .fi2{flex:1}
+.upbtn{padding:11px 13px;border:1.5px solid #ede8f5;border-radius:11px;background:white;cursor:pointer;font-size:13px;font-weight:600;color:#94a3b8;white-space:nowrap;transition:all var(--tr);display:flex;align-items:center;gap:5px}
+.upbtn:hover{border-color:var(--h1);color:var(--h1)}
+.mfooter{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid #f5f3ff}
+.btn{padding:10px 20px;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all var(--tr)}
+.btn-s{background:#f5f3ff;color:#94a3b8}.btn-s:hover{background:#ede9fe;color:#7c3aed}
+.btn-p{background:var(--grad);color:white;box-shadow:0 4px 14px color-mix(in srgb,var(--h1) 30%,transparent)}.btn-p:hover{transform:translateY(-1px)}
+.btn-d{background:#fef2f2;color:#ef4444}.btn-d:hover{background:#fee2e2}
+.s-backdrop{position:fixed;inset:0;z-index:750;background:rgba(0,0,0,.28)}
+.s-panel{position:fixed;inset:0;z-index:760;display:flex;align-items:center;justify-content:center;padding:20px}
+.s-box{position:relative;background:white;border-radius:22px;width:min(940px,100%);height:min(690px,90vh);display:flex;overflow:hidden;box-shadow:0 32px 80px rgba(168,85,247,.2)}
+.s-nav{width:215px;flex-shrink:0;background:linear-gradient(180deg,#faf5ff 0%,#fdf2f8 100%);border-right:1px solid #ede8f5;display:flex;flex-direction:column;overflow-y:auto;position:relative}
+.s-close-top{position:absolute;top:14px;right:14px;width:22px;height:22px;border-radius:50%;background:#ff5f57;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,0);font-size:11px;font-weight:700;transition:all var(--tr);box-shadow:0 2px 6px rgba(255,95,87,.45);z-index:10}
+.s-close-top:hover{color:rgba(0,0,0,.5)}
+.s-nav-header{padding:20px 18px 14px 18px;display:flex;align-items:center;gap:10px}
+.s-nav-ico{width:32px;height:32px;background:var(--grad);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px color-mix(in srgb,var(--h1) 35%,transparent)}
+.s-nav-t{font-size:14px;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.s-nav-list{padding:8px;flex:1}
+.s-ni{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:11px;cursor:pointer;font-size:13px;font-weight:600;color:#6b7280;transition:all var(--tr);margin-bottom:3px}
+.s-ni:hover{background:rgba(168,85,247,.07);color:#1e1b2e}
+.s-ni.active{background:var(--grad);color:white;box-shadow:0 4px 14px color-mix(in srgb,var(--h1) 30%,transparent)}
+.s-ni .s-ico{font-size:16px;width:22px;text-align:center}
+.s-content{flex:1;overflow-y:auto;padding:28px 30px}
+.s-title{font-size:17px;font-weight:800;color:#1e1b2e;margin-bottom:20px;padding-bottom:13px;border-bottom:2px solid #f5f3ff;display:flex;align-items:center;gap:8px}
+.s-card{background:#faf8ff;border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid #ede8f5}
+.s-row{margin-bottom:14px}
+.s-row:last-child{margin-bottom:0}
+.s-lbl{display:block;font-size:11px;font-weight:700;color:#94a3b8;margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px}
+.s-inp{width:100%;padding:10px 13px;border:1.5px solid #ede8f5;border-radius:11px;font-size:14px;color:#1e1b2e;outline:none;transition:all var(--tr);background:white;font-family:inherit}
+.s-inp:focus{border-color:var(--h1);box-shadow:0 0 0 3px color-mix(in srgb,var(--h1) 10%,transparent)}
+.s-inp:disabled{background:#f5f3ff;color:#94a3b8}
+.s-slider-row{display:flex;align-items:center;gap:12px}
+.s-slider{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:#ede8f5;outline:none;cursor:pointer}
+.s-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--grad);cursor:pointer;box-shadow:0 2px 6px rgba(168,85,247,.3)}
+.s-slider::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--h1);cursor:pointer;border:none}
+.s-slider-val{width:44px;text-align:right;font-size:13px;font-weight:700;color:var(--h1)}
+.t-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f5f3ff}
+.t-row:last-child{border-bottom:none}
+.t-lbl{font-size:14px;font-weight:600;color:#1e1b2e}
+.t-sub{font-size:12px;color:#94a3b8;margin-top:2px}
+.sw{position:relative;width:42px;height:24px;flex-shrink:0}
+.sw input{opacity:0;width:0;height:0}
+.sl{position:absolute;inset:0;background:#e2e8f0;border-radius:24px;cursor:pointer;transition:all var(--tr)}
+.sl:before{content:'';position:absolute;width:18px;height:18px;background:white;border-radius:50%;left:3px;top:3px;transition:transform var(--tr);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.sw input:checked+.sl{background:var(--grad)}
+.sw input:checked+.sl:before{transform:translateX(18px)}
+.lang-btns{display:flex;gap:8px}
+.lang-btn{flex:1;padding:9px 14px;border:2px solid #ede8f5;border-radius:11px;background:white;cursor:pointer;font-size:14px;font-weight:700;color:#6b7280;transition:all var(--tr);text-align:center}
+.lang-btn:hover{border-color:var(--h1);color:var(--h1)}
+.lang-btn.active{border-color:var(--h1);color:var(--h1);background:#faf5ff}
+.theme-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:4px}
+.theme-item{border-radius:13px;padding:12px 8px;cursor:pointer;transition:all var(--tr);background:white;border:2px solid #ede8f5;text-align:center}
+.theme-item:hover{transform:scale(1.04);border-color:var(--h1)}
+.theme-item.sel{border-color:var(--h1);box-shadow:0 4px 14px color-mix(in srgb,var(--h1) 25%,transparent)}
+.theme-dot{width:36px;height:36px;border-radius:50%;margin:0 auto 8px;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.theme-name{font-size:11px;font-weight:600;color:#4b5563}
+.u-table{width:100%;border-collapse:collapse}
+.u-table th{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;padding:8px 13px;text-align:left;background:#f5f3ff;border-bottom:1px solid #ede8f5}
+.u-table th:first-child{border-radius:10px 0 0 0}.u-table th:last-child{border-radius:0 10px 0 0}
+.u-table td{padding:12px 13px;border-bottom:1px solid #faf5ff;font-size:14px;color:#1e1b2e}
+.u-table tr:last-child td{border-bottom:none}
+.badge{display:inline-flex;padding:3px 9px;border-radius:7px;font-size:11px;font-weight:700}
+.b-admin{background:#fef3c7;color:#d97706}.b-user{background:#f0fdf4;color:#16a34a}.b-cur{background:#ede9fe;color:#7c3aed;margin-left:4px;font-size:10px}
+.wp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+.wp-thumb{aspect-ratio:16/9;border-radius:11px;cursor:pointer;overflow:hidden;border:3px solid transparent;transition:all var(--tr)}
+.wp-thumb:hover,.wp-thumb.sel{border-color:var(--h1);transform:scale(1.03);box-shadow:0 4px 14px color-mix(in srgb,var(--h1) 25%,transparent)}
+.wp-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.info-box{background:linear-gradient(135deg,#f5f3ff,#fdf2f8);border:1px solid rgba(168,85,247,.15);border-radius:11px;padding:13px 15px;font-size:13px;color:#7c3aed;margin-bottom:16px;line-height:1.6}
+.backup-btns{display:flex;gap:10px;flex-wrap:wrap}
+.backup-btn{flex:1;min-width:140px;padding:13px;border-radius:12px;border:2px dashed #d8b4fe;background:#faf5ff;cursor:pointer;font-size:14px;font-weight:600;color:#7c3aed;transition:all var(--tr);display:flex;flex-direction:column;align-items:center;gap:6px}
+.backup-btn:hover{background:#f3e8ff;border-color:var(--h1);transform:translateY(-2px)}
+.backup-btn .b-ico{font-size:24px}.backup-btn .b-sub{font-size:11px;color:#94a3b8;font-weight:500}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(120px);background:rgba(15,5,30,.82);color:white;padding:10px 22px;border-radius:24px;font-size:13px;z-index:9999;transition:transform .26s;backdrop-filter:blur(12px);white-space:nowrap;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+@media(max-width:700px){
+  .dash-header{padding:14px 18px 0}.hero{padding:22px 16px 30px}.apps-outer{padding:0 18px 28px}
+  .apps-grid{gap:14px;justify-content:center}.s-panel{padding:0}
+  .s-box{width:100%;height:100%;border-radius:0;flex-direction:column}
+  .s-nav{width:100%;height:auto;border-right:none;border-bottom:1px solid #ede8f5;flex-shrink:0}
+  .s-nav-list{display:flex;flex-direction:row;flex-wrap:wrap;gap:3px;padding:6px 10px 10px}
+  .s-ni{padding:7px 10px;margin-bottom:0;font-size:12px}.s-nav-header{padding:12px 14px 6px 14px}
+  .s-content{padding:16px 14px}.wp-grid{grid-template-columns:repeat(2,1fr)}
+  .theme-grid{grid-template-columns:repeat(3,1fr)}.backup-btns{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ── 农历 ──────────────────────────────────────────────────────────
+const LD=[0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06aa0,0x0a6b6,0x056a0,0x02b40,0x0d9e4,0x0d950,0x0c954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0f92f,0x0e950,0x06c40,0x0d9a6,0x0aad0,0x055b0,0x04ae4,0x0a570,0x05260,0x0f263,0x0d950];
+const LM=['正','二','三','四','五','六','七','八','九','十','冬','腊'];
+const LD2=['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十','廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+function lMon(y){return LD[y-1900]&0xf}function lDays(y){return lMon(y)?((LD[y-1900]&0x10000)?30:29):0}function mDays(y,m){return(LD[y-1900]&(0x10000>>m))?30:29}function lyDays(y){let i,s=348;for(i=0x8000;i>0x8;i>>=1)s+=(LD[y-1900]&i)?1:0;return s+lDays(y)}
+function getLunar(date){try{const base=new Date(1900,0,31);let off=Math.round((date-base)/86400000),y,temp=0;for(y=1900;y<2101&&temp<=off;y++)temp+=lyDays(y);if(temp>off)y--;off-=(temp-lyDays(y));let m,isL=false,lm=lMon(y);for(m=1;m<=12&&off>0;m++){let d;if(!isL&&m==lm+1&&lDays(y)>0){--m;isL=true;d=lDays(y);}else d=mDays(y,m);if(isL&&m==lm+1)isL=false;off-=d;}if(off==0&&lm==m-1&&lDays(y)>0){if(isL)isL=false;else{isL=true;--m;}}if(off<0){off+=mDays(y,m-1);--m;}return LM[m-1]+'月'+LD2[off];}catch(e){return '';}}
+
+// ── i18n ──────────────────────────────────────────────────────────
+const STRINGS={
+  zh:{loginSub:'请登录以继续',loginBtn:'登录',loginErr:'账号或密码错误',addApp:'添加应用',editApp:'编辑应用',appNamePrev:'应用名称',iconStyle:'图标风格',textIcon:'文字',imageIcon:'图片',iconPlaceholder:'文字（最多2字符）',iconUrlPlaceholder:'输入图标地址或点右侧上传',titleLbl:'标题 *',urlLbl:'地址 *',openLbl:'打开方式',newTab:'新窗口打开',currentTab:'当前窗口',deleteBtn:'删除',cancelBtn:'取消',saveBtn:'保存',editLabel:'编辑',sysSettings:'系统设置',niAccount:'我的信息',niDisplay:'显示',niFonts:'字体设置',niTheme:'主题色',niClock:'时钟组件',niWallpaper:'壁纸设置',niUsers:'账号管理',niAccess:'访问控制',niBackup:'数据管理',niLanguage:'语言',titleAccount:'👤 我的信息',titleDisplay:'📐 显示',titleFonts:'🔤 字体设置',titleTheme:'🌈 主题色',titleClock:'🕐 时钟组件',titleWallpaper:'🖼️ 壁纸设置',titleUsers:'👥 账号管理',titleAccess:'🔓 访问控制',titleBackup:'💾 数据管理',lblUsername:'账号',lblNickname:'昵称',nickPlaceholder:'输入昵称',saveNickBtn:'保存昵称',changePwdTitle:'修改密码',lblOldPwd:'旧密码',lblNewPwd:'新密码',changePwdBtn:'修改密码',logoutBtn:'退出登录',lblHostnameDisplay:'主机名显示',lblHostnameSize:'主机名大小',lblClockSize:'时间字体大小',lblIconSize:'应用图标大小',lblAppnameSize:'应用名称大小',saveDisplayBtn:'保存',ckTime:'显示时间',ckSec:'显示秒',ckDate:'显示日期',ckDateSub:'月-日',ckWeek:'显示星期',ckLunar:'显示农历',ckLunarSub:'如：正月初一',lblCustomUrl:'自定义 URL',applyWpBtn:'应用壁纸',infoAccounts:'管理面板登录账号。各账号独立管理数据。',titleAddUser:'添加用户',lblNuName:'账号',lblNuPwd:'密码',lblNuNick:'昵称（可选）',addUserBtn:'添加',lblPubMode:'公开访问模式',subPubMode:'无需登录即可浏览，编辑操作仍需登录',lblPrivateMode:'私有模式（默认）：',descPrivateMode:'访问面板需先登录',lblPublicMode:'公开模式：',descPublicMode:'任何人可浏览面板，点击设置/编辑时弹出登录框',infoBackup:'备份包含：所有应用图标、面板设置、时钟配置、壁纸信息。\n账户密码等敏感信息不含在备份中。',exportBtn:'导出数据',exportDesc:'下载 JSON 备份文件',importBtn:'导入数据',importDesc:'从备份文件恢复',lblDanger:'危险操作',clearBtn:'🗑 清空所有应用数据',tSaved:'已保存 ✓',tFailed:'保存失败',tDeleted:'已删除',tDeleteFailed:'删除失败',tUploaded:'上传成功',tUploadFailed:'上传失败',tSortSaved:'排序已保存 ✓',tLoggedOut:'已退出登录',tNickSaved:'昵称已保存 ✓',tPwdChanged:'密码已修改 ✓',tPwdFailed:'修改失败',tUserAdded:'已添加 ✓',tUserAddFailed:'添加失败',tExported:'导出成功 ✓',tExportFailed:'导出失败',tImported:'导入成功 ✓',tImportFailed:'导入失败',tCleared:'已清空',confirmDelete:'确认删除此应用？',confirmDeleteUser:'确认删除用户',confirmImport:'导入将覆盖当前所有应用和设置，确认继续？',confirmClear:'确认清空所有应用数据？此操作不可恢复！',fillTitleUrl:'请填写标题和地址',fillPwd:'请填写密码',fillAccountPwd:'请填写账号和密码',badBackup:'备份文件格式错误',pleaseLogin:'请登录以访问面板',loginRequired:'需要登录才能执行此操作',thColAccount:'账号',thColNickname:'昵称',thColRole:'角色',thColAction:'操作',roleAdmin:'管理员',roleUser:'用户',badgeCurrent:'当前',deleteUserBtn:'删除',pubOn:'已开启公开访问',pubOff:'已切换为私有模式',weekdays:['星期日','星期一','星期二','星期三','星期四','星期五','星期六']},
+  en:{loginSub:'Please sign in to continue',loginBtn:'Sign In',loginErr:'Invalid username or password',addApp:'Add App',editApp:'Edit App',appNamePrev:'App Name',iconStyle:'Icon Style',textIcon:'Text',imageIcon:'Image',iconPlaceholder:'Text (max 2 chars)',iconUrlPlaceholder:'Enter icon URL or upload',titleLbl:'Title *',urlLbl:'URL *',openLbl:'Open Mode',newTab:'New Tab',currentTab:'Current Tab',deleteBtn:'Delete',cancelBtn:'Cancel',saveBtn:'Save',editLabel:'Edit',sysSettings:'System Settings',niAccount:'My Profile',niDisplay:'Display',niFonts:'Fonts',niTheme:'Theme',niClock:'Clock',niWallpaper:'Wallpaper',niUsers:'Accounts',niAccess:'Access',niBackup:'Data',niLanguage:'Language',titleAccount:'👤 My Profile',titleDisplay:'📐 Display',titleFonts:'🔤 Fonts',titleTheme:'🌈 Theme Color',titleClock:'🕐 Clock Widget',titleWallpaper:'🖼️ Wallpaper',titleUsers:'👥 Accounts',titleAccess:'🔓 Access Control',titleBackup:'💾 Data',lblUsername:'Username',lblNickname:'Nickname',nickPlaceholder:'Enter nickname',saveNickBtn:'Save Nickname',changePwdTitle:'Change Password',lblOldPwd:'Old Password',lblNewPwd:'New Password',changePwdBtn:'Change Password',logoutBtn:'Sign Out',lblHostnameDisplay:'Hostname Display',lblHostnameSize:'Hostname Font Size',lblClockSize:'Clock Font Size',lblIconSize:'App Icon Size',lblAppnameSize:'App Name Size',saveDisplayBtn:'Save',ckTime:'Show Time',ckSec:'Show Seconds',ckDate:'Show Date',ckDateSub:'M-D',ckWeek:'Show Weekday',ckLunar:'Show Lunar',ckLunarSub:'e.g. 正月初一',lblCustomUrl:'Custom URL',applyWpBtn:'Apply Wallpaper',infoAccounts:'Manage panel login accounts.',titleAddUser:'Add User',lblNuName:'Username',lblNuPwd:'Password',lblNuNick:'Nickname (optional)',addUserBtn:'Add',lblPubMode:'Public Access Mode',subPubMode:'Anyone can browse; editing requires login',lblPrivateMode:'Private Mode (default): ',descPrivateMode:'Login required to access the panel',lblPublicMode:'Public Mode: ',descPublicMode:'Anyone can browse; settings/edit requires login',infoBackup:'Backup includes: all apps, panel settings, clock config, wallpaper.\nPasswords and sensitive data excluded.',exportBtn:'Export',exportDesc:'Download JSON backup',importBtn:'Import',importDesc:'Restore from backup',lblDanger:'Danger Zone',clearBtn:'🗑 Clear All App Data',tSaved:'Saved ✓',tFailed:'Save failed',tDeleted:'Deleted',tDeleteFailed:'Delete failed',tUploaded:'Uploaded',tUploadFailed:'Upload failed',tSortSaved:'Order saved ✓',tLoggedOut:'Signed out',tNickSaved:'Nickname saved ✓',tPwdChanged:'Password changed ✓',tPwdFailed:'Change failed',tUserAdded:'Added ✓',tUserAddFailed:'Add failed',tExported:'Exported ✓',tExportFailed:'Export failed',tImported:'Imported ✓',tImportFailed:'Import failed',tCleared:'Cleared',confirmDelete:'Delete this app?',confirmDeleteUser:'Delete user',confirmImport:'Import will overwrite all apps and settings. Continue?',confirmClear:'Clear all app data? This cannot be undone!',fillTitleUrl:'Please fill in title and URL',fillPwd:'Please enter passwords',fillAccountPwd:'Please fill in username and password',badBackup:'Invalid backup file',pleaseLogin:'Please login to access the panel',loginRequired:'Login required for this action',thColAccount:'Username',thColNickname:'Nickname',thColRole:'Role',thColAction:'Action',roleAdmin:'Admin',roleUser:'User',badgeCurrent:'current',deleteUserBtn:'Delete',pubOn:'Public access enabled',pubOff:'Switched to private mode',weekdays:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']}
+};
+
+const THEMES=[
+  {id:'purple-pink',name:'紫粉',h1:'#a855f7',h2:'#ec4899',dot:'linear-gradient(135deg,#a855f7,#ec4899)',wp:'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1920&q=80'},
+  {id:'blue-cyan',name:'蓝青',h1:'#3b82f6',h2:'#06b6d4',dot:'linear-gradient(135deg,#3b82f6,#06b6d4)',wp:'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80'},
+  {id:'green-teal',name:'绿青',h1:'#22c55e',h2:'#14b8a6',dot:'linear-gradient(135deg,#22c55e,#14b8a6)',wp:'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=1920&q=80'},
+  {id:'orange-red',name:'橙红',h1:'#f97316',h2:'#ef4444',dot:'linear-gradient(135deg,#f97316,#ef4444)',wp:'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1920&q=80'},
+  {id:'dark-blue',name:'深蓝',h1:'#1d4ed8',h2:'#7c3aed',dot:'linear-gradient(135deg,#1d4ed8,#7c3aed)',wp:'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80'},
+  {id:'rose-gold',name:'玫瑰金',h1:'#f43f5e',h2:'#fb923c',dot:'linear-gradient(135deg,#f43f5e,#fb923c)',wp:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80'},
+  {id:'indigo-violet',name:'靛紫',h1:'#6366f1',h2:'#8b5cf6',dot:'linear-gradient(135deg,#6366f1,#8b5cf6)',wp:'https://images.unsplash.com/photo-1548484352-ea579e5233a8?w=1920&q=80'},
+];
+const WPS=['https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1920&q=80','https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80','https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80','https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1920&q=80','https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80','https://images.unsplash.com/photo-1548484352-ea579e5233a8?w=1920&q=80'];
+const FONT_OPTIONS=[{v:'system',l:'系统默认'},{v:"'PingFang SC','Microsoft YaHei',sans-serif",l:'苹方/微软雅黑'},{v:"'Noto Sans SC',sans-serif",l:'Noto Sans'},{v:"Georgia,'Times New Roman',serif",l:'Georgia'},{v:"'Courier New',Courier,monospace",l:'Courier'},{v:"Impact,Haettenschweiler,'Arial Narrow Bold',sans-serif",l:'Impact'}];
+
+const {createApp,ref,reactive,computed,watch,onMounted,onUnmounted,nextTick}=Vue;
+
+async function apiCall(url,o={}){const r=await fetch(url,{headers:{'Content-Type':'application/json'},credentials:'include',...o});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||'failed');}return r.json();}
+
+function resolveFont(f){return(!f||f==='system')?"-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif":f;}
+
+createApp({
+  setup(){
+    const lang=ref(localStorage.getItem('ep_lang')||'zh');
+    const t=k=>(STRINGS[lang.value]||STRINGS.zh)[k]||STRINGS.zh[k]||k;
+    const apps=ref([]);
+    const panelInfo=ref({});
+    const curUser=ref(null);
+    const pubMode=ref(false);
+    // Clock
+    const clkCfg=reactive({show_time:true,show_date:true,show_weekday:true,show_lunar:false,show_seconds:false});
+    const clockHtml=ref('');
+    let clkTimer=null;
+    // Theme
+    const curThemeId=ref('purple-pink');
+    const curTheme=computed(()=>THEMES.find(x=>x.id===curThemeId.value)||THEMES[0]);
+    // Display
+    const ds=reactive({hostnameSize:56,clockSize:16,iconSize:78,appNameSize:12,iconRadius:26,iconGap:22,sidePadding:52});
+    const fs=reactive({hostname:'system',clock:'system',appname:'system',ui:'system'});
+    // Login
+    const showLogin=ref(false);
+    const loginSub=ref('');
+    const loginUser=ref('');
+    const loginPass=ref('');
+    const loginErr=ref(false);
+    const loginCb=ref(null);
+    // App modal
+    const showModal=ref(false);
+    const editId=ref(null);
+    const iconType=ref('text');
+    const iconTxt=ref('');
+    const iconUrl=ref('');
+    const appTitle=ref('');
+    const appUrl=ref('');
+    const appOpen=ref('new_tab');
+    // Context menu
+    const ctxShow=ref(false);
+    const ctxX=ref(0),ctxY=ref(0),ctxId=ref(null);
+    // Sort
+    const sortMode=ref(false);
+    const dragOver=ref(null);
+    // Settings
+    const showSettings=ref(false);
+    const sTab=ref('account');
+    const sNick=ref(''),sOldPwd=ref(''),sNewPwd=ref('');
+    const sHost=ref(''),sLogo=ref(''),sLogoPrv=ref(''),sWpUrl=ref('');
+    const users=ref([]);
+    const nuName=ref(''),nuPwd=ref(''),nuNick=ref('');
+    const pubToggle=ref(false);
+    // Slider locals
+    const slH=ref(56),slC=ref(16),slI=ref(78),slA=ref(12),slR=ref(26),slG=ref(22),slP=ref(52);
+    const fH=ref('system'),fC=ref('system'),fA=ref('system'),fU=ref('system');
+    // Toast
+    const toastMsg=ref('');
+    const toastShow=ref(false);
+    let toastT=null;
+
+    // Computed styles
+    const wpStyle=computed(()=>`url(${panelInfo.value.wallpaper||curTheme.value.wp||WPS[0]})`);
+    const iconBr=computed(()=>Math.round((ds.iconRadius||26)/100*ds.iconSize)+'px');
+    const iconWrapSt=computed(()=>({width:ds.iconSize+'px',height:ds.iconSize+'px',borderRadius:iconBr.value}));
+    const iconTxtSt=computed(()=>({fontSize:Math.round(ds.iconSize*.33)+'px',borderRadius:iconBr.value}));
+    const cardSt=computed(()=>({width:(ds.iconSize+14)+'px'}));
+    const nameSt=computed(()=>({fontSize:ds.appNameSize+'px',maxWidth:(ds.iconSize+10)+'px',fontFamily:resolveFont(fs.appname)}));
+    const gridSt=computed(()=>({gap:(ds.iconGap||22)+'px'}));
+    const outerSt=computed(()=>({padding:`0 ${ds.sidePadding}px 52px`}));
+    const headerSt=computed(()=>({padding:`22px ${ds.sidePadding}px 0`}));
+    const hostSt=computed(()=>({fontSize:ds.hostnameSize+'px',fontFamily:resolveFont(fs.hostname)}));
+    const clockSt=computed(()=>({fontSize:ds.clockSize+'px',fontFamily:resolveFont(fs.clock)}));
+    const settBoxSt=computed(()=>({fontFamily:resolveFont(fs.ui)}));
+    const prevIconTxt=computed(()=>{
+      if(iconType.value==='text')return(iconTxt.value||(appTitle.value||'?').substring(0,2)).substring(0,2);
+      return(appTitle.value||'?').substring(0,2);
+    });
+
+    watch(curTheme,th=>{
+      const r=document.documentElement.style;
+      r.setProperty('--h1',th.h1);r.setProperty('--h2',th.h2);
+      r.setProperty('--grad',`linear-gradient(135deg,${th.h1},${th.h2})`);
+    },{immediate:true});
+
+    function showToast(msg){toastMsg.value=msg;toastShow.value=true;clearTimeout(toastT);toastT=setTimeout(()=>toastShow.value=false,2400);}
+
+    function buildPayload(){
+      return{hostname:panelInfo.value.hostname||'',logo:panelInfo.value.logo||'',wallpaper:panelInfo.value.wallpaper||'',clock:{...clkCfg},theme:curThemeId.value,language:lang.value,hostname_size:ds.hostnameSize,clock_size:ds.clockSize,icon_size:ds.iconSize,app_name_size:ds.appNameSize,icon_radius:ds.iconRadius,icon_gap:ds.iconGap,side_padding:ds.sidePadding,font_hostname:fs.hostname,font_clock:fs.clock,font_appname:fs.appname,font_ui:fs.ui};
+    }
+
+    // Clock
+    function tick(){
+      const now=new Date(),pad=n=>String(n).padStart(2,'0');
+      let parts=[];
+      if(clkCfg.show_time){let tv=`${pad(now.getHours())}:${pad(now.getMinutes())}`;if(clkCfg.show_seconds)tv+=`:${pad(now.getSeconds())}`;parts.push(`<span>${tv}</span>`);}
+      const days=t('weekdays'),items=[];
+      if(clkCfg.show_date)items.push(`${now.getMonth()+1}-${now.getDate()}`);
+      if(clkCfg.show_weekday)items.push(days[now.getDay()]);
+      if(clkCfg.show_lunar&&lang.value==='zh'){const l=getLunar(now);if(l)items.push(l);}
+      if(items.length)parts.push(`<span class="div">|</span><span>${items.join(' &nbsp;')}</span>`);
+      clockHtml.value=parts.join('');
+    }
+    function startClock(){if(clkTimer)clearInterval(clkTimer);tick();clkTimer=setInterval(tick,1000);}
+
+    // Data loading
+    async function loadPanel(){
+      try{
+        const info=await apiCall('/api/panel');
+        panelInfo.value=info;pubMode.value=info.public_mode||false;
+        if(info.clock)Object.assign(clkCfg,info.clock);
+        const sl=info.language||localStorage.getItem('ep_lang')||'zh';
+        lang.value=sl;localStorage.setItem('ep_lang',sl);
+        const th=THEMES.find(x=>x.id===info.theme)||THEMES[0];curThemeId.value=th.id;
+        Object.assign(ds,{hostnameSize:info.hostname_size||56,clockSize:info.clock_size||16,iconSize:info.icon_size||78,appNameSize:info.app_name_size||12,iconRadius:info.icon_radius||26,iconGap:info.icon_gap||22,sidePadding:info.side_padding||52});
+        Object.assign(fs,{hostname:info.font_hostname||'system',clock:info.font_clock||'system',appname:info.font_appname||'system',ui:info.font_ui||'system'});
+      }catch(e){console.error(e);}
+    }
+    async function loadApps(){try{apps.value=await apiCall('/api/apps');}catch(e){console.error(e);}}
+
+    // Auth
+    function openLoginModal(sub,cb){loginSub.value=sub||t('loginSub');loginCb.value=cb||null;loginErr.value=false;loginUser.value='';loginPass.value='';showLogin.value=true;nextTick(()=>document.getElementById('lu-in')?.focus());}
+    function closeLoginModal(){showLogin.value=false;loginCb.value=null;}
+    async function doLogin(){loginErr.value=false;try{const r=await apiCall('/api/login',{method:'POST',body:JSON.stringify({username:loginUser.value.trim(),password:loginPass.value})});curUser.value=r;closeLoginModal();if(loginCb.value){loginCb.value();loginCb.value=null;}}catch(e){loginErr.value=true;}}
+    async function doLogout(){await apiCall('/api/logout',{method:'POST'}).catch(()=>{});curUser.value=null;closeSettings();if(!pubMode.value)openLoginModal(t('pleaseLogin'),()=>closeLoginModal());showToast(t('tLoggedOut'));}
+    function requireAuth(cb){if(curUser.value){cb();return;}openLoginModal(t('loginRequired'),()=>{closeLoginModal();cb();});}
+
+    // App modal
+    function openAdd(){editId.value=null;iconType.value='text';iconTxt.value='';iconUrl.value='';appTitle.value='';appUrl.value='';appOpen.value='new_tab';showModal.value=true;}
+    function openEdit(id){const a=apps.value.find(x=>x.id===id);if(!a)return;editId.value=id;iconType.value=a.icon_type||'text';iconTxt.value=a.icon_text||'';iconUrl.value=a.icon_image||'';appTitle.value=a.title||'';appUrl.value=a.url||'';appOpen.value=a.open_type||'new_tab';showModal.value=true;}
+    function closeModal(){showModal.value=false;}
+    async function saveApp(){const title=appTitle.value.trim(),url=appUrl.value.trim();if(!title||!url){showToast(t('fillTitleUrl'));return;}const data={title,url,icon_type:iconType.value,icon_text:iconTxt.value,icon_image:iconUrl.value,open_type:appOpen.value};try{if(editId.value)await apiCall(`/api/apps/${editId.value}`,{method:'PUT',body:JSON.stringify(data)});else await apiCall('/api/apps',{method:'POST',body:JSON.stringify(data)});closeModal();await loadApps();showToast(t('tSaved'));}catch(e){showToast(t('tFailed'));}}
+    async function delApp(){if(!editId.value||!confirm(t('confirmDelete')))return;try{await apiCall(`/api/apps/${editId.value}`,{method:'DELETE'});closeModal();await loadApps();showToast(t('tDeleted'));}catch(e){showToast(t('tDeleteFailed'));}}
+    async function uploadIconFile(e){const f=e.target.files[0];if(!f)return;const fd=new FormData();fd.append('image',f);try{const r=await fetch('/api/upload',{method:'POST',body:fd,credentials:'include'});const d=await r.json();iconUrl.value=d.url;showToast(t('tUploaded'));}catch(e){showToast(t('tUploadFailed'));}e.target.value='';}
+
+    // Context menu
+    function showCtx(x,y,id){ctxId.value=id;ctxShow.value=true;const w=150,h=90;ctxX.value=(x+w>window.innerWidth?x-w:x);ctxY.value=(y+h>window.innerHeight?y-h:y);}
+    function hideCtx(){ctxShow.value=false;ctxId.value=null;}
+    function ctxEdit(){const id=ctxId.value;hideCtx();if(id)openEdit(id);}
+    async function ctxDelete(){const id=ctxId.value;hideCtx();if(!id||!confirm(t('confirmDelete')))return;try{await apiCall(`/api/apps/${id}`,{method:'DELETE'});await loadApps();showToast(t('tDeleted'));}catch(e){showToast(t('tDeleteFailed'));}}
+
+    // Sort
+    function enterSort(){sortMode.value=true;}
+    async function exitSort(save){sortMode.value=false;dragOver.value=null;if(save){try{await apiCall('/api/apps/reorder',{method:'POST',body:JSON.stringify({ids:apps.value.map(a=>a.id)})});showToast(t('tSortSaved'));}catch(e){showToast('failed');}}else await loadApps();}
+    function onDragStart(e,id){if(!sortMode.value){e.preventDefault();return;}e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',id);}
+    function onDragOver(e,id){if(!sortMode.value)return;e.preventDefault();dragOver.value=id;}
+    function onDragLeave(){dragOver.value=null;}
+    function onDrop(e,targetId){e.preventDefault();dragOver.value=null;const srcId=e.dataTransfer.getData('text/plain');if(!srcId||srcId===targetId)return;const a=apps.value.findIndex(x=>x.id===srcId),b=apps.value.findIndex(x=>x.id===targetId);if(a<0||b<0)return;const[item]=apps.value.splice(a,1);apps.value.splice(b,0,item);}
+
+    // App click
+    function appClick(app){if(sortMode.value)return;if(!app.url)return;app.open_type==='current'?(window.location.href=app.url):window.open(app.url,'_blank');}
+    function appCtxMenu(e,id){e.preventDefault();if(sortMode.value)return;requireAuth(()=>showCtx(e.clientX,e.clientY,id));}
+
+    // Settings
+    async function openSettings(){
+      sNick.value=curUser.value?.nickname||'';sHost.value=panelInfo.value.hostname||'';sLogo.value=panelInfo.value.logo||'';sLogoPrv.value=panelInfo.value.logo||'';sWpUrl.value=panelInfo.value.wallpaper||'';pubToggle.value=pubMode.value;sOldPwd.value='';sNewPwd.value='';
+      slH.value=ds.hostnameSize;slC.value=ds.clockSize;slI.value=ds.iconSize;slA.value=ds.appNameSize;slR.value=ds.iconRadius||26;slG.value=ds.iconGap||22;slP.value=ds.sidePadding||52;
+      fH.value=fs.hostname||'system';fC.value=fs.clock||'system';fA.value=fs.appname||'system';fU.value=fs.ui||'system';
+      await loadUsers();showSettings.value=true;
+    }
+    function closeSettings(){showSettings.value=false;}
+    async function saveNick(){try{await apiCall('/api/me/nickname',{method:'PUT',body:JSON.stringify({nickname:sNick.value.trim()})});if(curUser.value)curUser.value.nickname=sNick.value.trim();showToast(t('tNickSaved'));}catch(e){showToast(t('tFailed'));}}
+    async function changePwd(){if(!sOldPwd.value||!sNewPwd.value){showToast(t('fillPwd'));return;}try{await apiCall('/api/me/password',{method:'PUT',body:JSON.stringify({old_password:sOldPwd.value,new_password:sNewPwd.value})});sOldPwd.value='';sNewPwd.value='';showToast(t('tPwdChanged'));}catch(e){showToast(t('tPwdFailed'));}}
+    async function savePanelCfg(){const sv=buildPayload();sv.hostname=sHost.value.trim();sv.logo=sLogo.value.trim();try{await apiCall('/api/settings',{method:'PUT',body:JSON.stringify(sv)});await loadPanel();showToast(t('tSaved'));}catch(e){showToast(t('tFailed'));}}
+    async function uploadLogo(e){const f=e.target.files[0];if(!f)return;const fd=new FormData();fd.append('logo',f);try{const r=await fetch('/api/upload/logo',{method:'POST',body:fd,credentials:'include'});const d=await r.json();sLogo.value=d.url;sLogoPrv.value=d.url;showToast(t('tUploaded'));}catch(e){showToast(t('tUploadFailed'));}e.target.value='';}
+    async function saveDisplaySettings(){Object.assign(ds,{hostnameSize:+slH.value,clockSize:+slC.value,iconSize:+slI.value,appNameSize:+slA.value,iconRadius:+slR.value,iconGap:+slG.value,sidePadding:+slP.value});const sv=buildPayload();try{await apiCall('/api/settings',{method:'PUT',body:JSON.stringify(sv)});showToast(t('tSaved'));}catch(e){showToast(t('tFailed'));}}
+    async function saveFontSettings(){Object.assign(fs,{hostname:fH.value,clock:fC.value,appname:fA.value,ui:fU.value});const sv=buildPayload();try{await apiCall('/api/settings',{method:'PUT',body:JSON.stringify(sv)});showToast(t('tSaved'));}catch(e){showToast(t('tFailed'));}}
+    async function applyTheme(id){curThemeId.value=id;const sv=buildPayload();try{await apiCall('/api/settings',{method:'PUT',body:JSON.stringify(sv)});}catch(e){}}
+    async function saveClk(){const sv=buildPayload();try{await apiCall('/api/settings',{method:'PUT',body:JSON.stringify(sv)});tick();}catch(e){}}
+    function selWp(url){sWpUrl.value=url;panelInfo.value={...panelInfo.value,wallpaper:url};}
+    async function uploadWp(e){const f=e.target.files[0];if(!f)return;const fd=new FormData();fd.append('wallpaper',f);try{const r=await fetch('/api/upload/wallpaper',{method:'POST',body:fd,credentials:'include'});const d=await r.json();sWpUrl.value=d.url;panelInfo.value={...panelInfo.value,wallpaper:d.url};showToast(t('tUploaded'));}catch(e){showToast(t('tUploadFailed'));}e.target.value='';}
+    async function saveWp(){const url=sWpUrl.value.trim();const sv=buildPayload();sv.wallpaper=url;try{await apiCall('/api/settings',{method:'PUT',body:JSON.stringify(sv)});panelInfo.value={...panelInfo.value,wallpaper:url};showToast(t('tSaved'));}catch(e){showToast(t('tFailed'));}}
+    async function loadUsers(){try{users.value=await apiCall('/api/users');}catch(e){}}
+    async function addUser(){if(!nuName.value.trim()||!nuPwd.value){showToast(t('fillAccountPwd'));return;}try{await apiCall('/api/users',{method:'POST',body:JSON.stringify({username:nuName.value.trim(),password:nuPwd.value,nickname:nuNick.value.trim()})});nuName.value='';nuPwd.value='';nuNick.value='';await loadUsers();showToast(t('tUserAdded'));}catch(e){showToast(t('tUserAddFailed'));}}
+    async function rmUser(u){if(!confirm(`${t('confirmDeleteUser')} ${u}？`))return;try{await apiCall(`/api/users/${u}`,{method:'DELETE'});await loadUsers();showToast(t('tDeleted'));}catch(e){showToast(t('tDeleteFailed'));}}
+    async function setPubMode(v){try{await apiCall('/api/publicmode',{method:'PUT',body:JSON.stringify({public_mode:v})});pubMode.value=v;showToast(v?t('pubOn'):t('pubOff'));}catch(e){showToast(t('tFailed'));pubToggle.value=!v;}}
+    async function setLang(l){lang.value=l;localStorage.setItem('ep_lang',l);if(curUser.value){const sv=buildPayload();sv.language=l;await apiCall('/api/settings',{method:'PUT',body:JSON.stringify(sv)}).catch(()=>{});}showToast(t('tSaved'));}
+    async function exportData(){try{const[ad,sd]=await Promise.all([apiCall('/api/apps'),apiCall('/api/settings')]);const b={version:1,exported_at:new Date().toISOString(),apps:ad,settings:sd,theme:curThemeId.value};const blob=new Blob([JSON.stringify(b,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`easypanel_backup_${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url);showToast(t('tExported'));}catch(e){showToast(t('tExportFailed'));}}
+    async function importData(e){const f=e.target.files[0];if(!f)return;if(!confirm(t('confirmImport'))){e.target.value='';return;}try{const text=await f.text();const b=JSON.parse(text);if(!b.version||!b.apps){showToast(t('badBackup'));e.target.value='';return;}if(b.settings)await apiCall('/api/settings',{method:'PUT',body:JSON.stringify(b.settings)});for(const app of apps.value)await apiCall(`/api/apps/${app.id}`,{method:'DELETE'}).catch(()=>{});for(const app of b.apps){const{id:_,order:__,...rest}=app;await apiCall('/api/apps',{method:'POST',body:JSON.stringify(rest)});}if(b.theme){const th=THEMES.find(x=>x.id===b.theme);if(th)curThemeId.value=th.id;}await loadPanel();await loadApps();showToast(t('tImported'));}catch(e){showToast(t('tImportFailed'));}e.target.value='';}
+    async function clearAllData(){if(!confirm(t('confirmClear')))return;try{for(const app of apps.value)await apiCall(`/api/apps/${app.id}`,{method:'DELETE'}).catch(()=>{});await loadApps();showToast(t('tCleared'));}catch(e){showToast(t('tFailed'));}}
+
+    onMounted(async()=>{
+      await loadPanel();await loadApps();startClock();
+      const auth=await apiCall('/api/checkauth').catch(()=>({logged_in:false}));
+      if(auth.logged_in)curUser.value=auth;
+      if(!pubMode.value&&!curUser.value)openLoginModal(t('pleaseLogin'),()=>closeLoginModal());
+      document.addEventListener('click',e=>{const ctx=document.getElementById('ctx-menu');if(ctx&&!ctx.contains(e.target))hideCtx();});
+    });
+    onUnmounted(()=>{if(clkTimer)clearInterval(clkTimer);});
+
+    const TABS=['account','display','fonts','theme','clock','wallpaper','users','access','backup','language'];
+    const TAB_ICONS={account:'👤',display:'📐',fonts:'🔤',theme:'🌈',clock:'🕐',wallpaper:'🖼️',users:'👥',access:'🔓',backup:'💾',language:'🌐'};
+    const TAB_NI_KEYS={account:'niAccount',display:'niDisplay',fonts:'niFonts',theme:'niTheme',clock:'niClock',wallpaper:'niWallpaper',users:'niUsers',access:'niAccess',backup:'niBackup',language:'niLanguage'};
+
+    return{
+      lang,t,apps,panelInfo,curUser,pubMode,clkCfg,clockHtml,THEMES,WPS,FONT_OPTIONS,curThemeId,curTheme,
+      ds,fs,showLogin,loginSub,loginUser,loginPass,loginErr,
+      showModal,editId,iconType,iconTxt,iconUrl,appTitle,appUrl,appOpen,
+      ctxShow,ctxX,ctxY,ctxId,sortMode,dragOver,
+      showSettings,sTab,sNick,sOldPwd,sNewPwd,sHost,sLogo,sLogoPrv,sWpUrl,
+      users,nuName,nuPwd,nuNick,pubToggle,
+      slH,slC,slI,slA,slR,slG,slP,fH,fC,fA,fU,
+      toastMsg,toastShow,
+      wpStyle,iconWrapSt,iconTxtSt,cardSt,nameSt,gridSt,outerSt,headerSt,hostSt,clockSt,settBoxSt,prevIconTxt,
+      TABS,TAB_ICONS,TAB_NI_KEYS,
+      doLogin,doLogout,requireAuth,openAdd,openEdit,closeModal,saveApp,delApp,uploadIconFile,
+      hideCtx,ctxEdit,ctxDelete,enterSort,exitSort,onDragStart,onDragOver,onDragLeave,onDrop,
+      appClick,appCtxMenu,
+      openSettings,closeSettings,saveNick,changePwd,savePanelCfg,uploadLogo,
+      saveDisplaySettings,saveFontSettings,applyTheme,saveClk,
+      selWp,uploadWp,saveWp,loadUsers,addUser,rmUser,setPubMode,setLang,
+      exportData,importData,clearAllData,
+    };
+  },
+
+  template:`
+<div>
+  <div id="dashboard">
+    <div class="wp-bg" :style="{backgroundImage:wpStyle}"></div>
+    <div class="wp-overlay"></div>
+    <div class="dash-content">
+      <div class="dash-header" :style="headerSt">
+        <img v-if="panelInfo.logo" class="dash-logo" :src="panelInfo.logo" alt="">
+        <button class="icon-btn" @click="requireAuth(openSettings)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+      <div class="hero">
+        <div class="hero-hostname" :style="hostSt">{{ panelInfo.hostname||'EasyPanel' }}</div>
+        <div class="hero-clock" :style="clockSt" v-html="clockHtml"></div>
+      </div>
+      <div class="apps-outer" :style="outerSt">
+        <div class="apps-inner">
+          <div class="group-row">
+            <div class="group-lbl">APP</div>
+            <div class="group-tools">
+              <button class="tool-btn" @click="requireAuth(openAdd)" :title="t('addApp')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+              <button class="tool-btn" :class="{active:sortMode}" @click="requireAuth(enterSort)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+              </button>
+            </div>
+          </div>
+          <div v-if="sortMode" class="sort-bar">
+            <button class="sort-btn" @click="exitSort(true)">💾 {{ lang==='en'?'Save Order':'保存排序' }}</button>
+            <button class="sort-btn" style="background:rgba(255,255,255,.6)" @click="exitSort(false)">✕ {{ t('cancelBtn') }}</button>
+          </div>
+          <div class="apps-grid" :style="gridSt">
+            <div v-for="app in apps" :key="app.id" class="app-card" :class="{['sort-mode']:sortMode,['drag-over']:dragOver===app.id}" :style="cardSt"
+              :draggable="sortMode" @click="appClick(app)" @contextmenu="appCtxMenu($event,app.id)"
+              @dragstart="onDragStart($event,app.id)" @dragover="onDragOver($event,app.id)" @dragleave="onDragLeave" @drop="onDrop($event,app.id)">
+              <div class="app-icon-wrap" :style="iconWrapSt">
+                <template v-if="app.icon_type==='image'&&app.icon_image">
+                  <img class="app-icon-img" :src="app.icon_image" :alt="app.title" :style="{borderRadius:iconWrapSt.borderRadius}" @error="e=>{e.target.style.display='none';e.target.nextElementSibling.style.display='flex'}">
+                  <div class="app-icon-txt" style="display:none" :style="iconTxtSt">{{ (app.title||'?').substring(0,2) }}</div>
+                </template>
+                <div v-else class="app-icon-txt" :style="iconTxtSt">{{ (app.icon_text&&app.icon_text.trim())?app.icon_text.trim():(app.title||'?').substring(0,2) }}</div>
+              </div>
+              <div class="app-name" :style="nameSt">{{ app.title }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Context Menu -->
+  <div id="ctx-menu" v-if="ctxShow" class="ctx" :style="{left:ctxX+'px',top:ctxY+'px'}">
+    <div class="ctx-item" @mousedown.stop="ctxEdit">✏️ &nbsp;{{ t('editLabel') }}</div>
+    <div class="ctx-item danger" @mousedown.stop="ctxDelete">🗑 &nbsp;{{ t('deleteBtn') }}</div>
+  </div>
+
+  <!-- Login -->
+  <div v-if="showLogin" id="login-overlay">
+    <div class="login-card">
+      <div class="login-logo-wrap"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg></div>
+      <div class="login-title"><span>EasyPanel</span></div>
+      <div class="login-sub">{{ loginSub }}</div>
+      <div class="fg"><span class="fi">👤</span><input id="lu-in" type="text" v-model="loginUser" :placeholder="t('lblUsername')" autocomplete="username" @keydown.enter="doLogin"></div>
+      <div class="fg"><span class="fi">🔒</span><input type="password" v-model="loginPass" placeholder="Password" autocomplete="current-password" @keydown.enter="doLogin"></div>
+      <p v-if="loginErr" class="login-err">{{ t('loginErr') }}</p>
+      <button class="login-btn" @click="doLogin">{{ t('loginBtn') }}</button>
+      <p class="login-foot">Powered By EasyPanel</p>
+    </div>
+  </div>
+
+  <!-- App Modal -->
+  <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">{{ editId?t('editApp'):t('addApp') }}</div>
+        <button class="close-btn" @click="closeModal">✕</button>
+      </div>
+      <div class="preview-box">
+        <div class="preview-ico">
+          <img v-if="iconType==='image'&&iconUrl" :src="iconUrl" style="width:100%;height:100%;object-fit:cover;border-radius:12px" @error="e=>e.target.style.display='none'">
+          <template v-else>{{ prevIconTxt }}</template>
+        </div>
+        <div>
+          <div class="preview-t">{{ appTitle||t('appNamePrev') }}</div>
+          <div class="preview-u">{{ appUrl||'https://...' }}</div>
+        </div>
+      </div>
+      <div class="fr">
+        <label class="fl">{{ t('iconStyle') }}</label>
+        <div class="itabs">
+          <button class="itab" :class="{active:iconType==='text'}" @click="iconType='text'">{{ t('textIcon') }}</button>
+          <button class="itab" :class="{active:iconType==='image'}" @click="iconType='image'">{{ t('imageIcon') }}</button>
+        </div>
+        <div v-if="iconType==='text'"><input type="text" class="fi2" v-model="iconTxt" :placeholder="t('iconPlaceholder')" maxlength="2"></div>
+        <div v-else class="img-row">
+          <input type="text" class="fi2" v-model="iconUrl" :placeholder="t('iconUrlPlaceholder')">
+          <label class="upbtn" for="ico-file">📁</label>
+          <input type="file" id="ico-file" accept="image/*" style="display:none" @change="uploadIconFile">
+        </div>
+      </div>
+      <div class="fr"><label class="fl">{{ t('titleLbl') }}</label><input type="text" class="fi2" v-model="appTitle" maxlength="20"></div>
+      <div class="fr"><label class="fl">{{ t('urlLbl') }}</label><input type="text" class="fi2" v-model="appUrl" placeholder="http(s)://"></div>
+      <div class="fr">
+        <label class="fl">{{ t('openLbl') }}</label>
+        <select class="fi2" v-model="appOpen"><option value="new_tab">{{ t('newTab') }}</option><option value="current">{{ t('currentTab') }}</option></select>
+      </div>
+      <div class="mfooter">
+        <button v-if="editId" class="btn btn-d" @click="delApp">{{ t('deleteBtn') }}</button>
+        <button class="btn btn-s" @click="closeModal">{{ t('cancelBtn') }}</button>
+        <button class="btn btn-p" @click="saveApp">{{ t('saveBtn') }}</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <template v-if="showSettings">
+    <div class="s-backdrop" @click="closeSettings"></div>
+    <div class="s-panel">
+      <div class="s-box" :style="settBoxSt">
+        <button class="s-close-top" @click="closeSettings" title="关闭"></button>
+        <div class="s-nav">
+          <div class="s-nav-header">
+            <div class="s-nav-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg></div>
+            <span class="s-nav-t">{{ t('sysSettings') }}</span>
+          </div>
+          <div class="s-nav-list">
+            <div v-for="tab in TABS" :key="tab" class="s-ni" :class="{active:sTab===tab}" @click="sTab=tab">
+              <span class="s-ico">{{ TAB_ICONS[tab] }}</span><span>{{ t(TAB_NI_KEYS[tab]) }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="s-content">
+
+          <!-- 我的信息 -->
+          <div v-if="sTab==='account'">
+            <div class="s-title">{{ t('titleAccount') }}</div>
+            <div class="s-card">
+              <div class="s-row"><label class="s-lbl">{{ t('lblUsername') }}</label><input class="s-inp" :value="curUser?.username||''" disabled></div>
+              <div class="s-row"><label class="s-lbl">{{ t('lblNickname') }}</label><input class="s-inp" v-model="sNick" :placeholder="t('nickPlaceholder')"></div>
+              <button class="btn btn-p" @click="saveNick">{{ t('saveNickBtn') }}</button>
+            </div>
+            <div class="s-card">
+              <div class="s-title" style="font-size:14px;margin-bottom:14px;padding-bottom:10px;border-bottom-width:1px">{{ t('changePwdTitle') }}</div>
+              <div class="s-row"><label class="s-lbl">{{ t('lblOldPwd') }}</label><input type="password" class="s-inp" v-model="sOldPwd"></div>
+              <div class="s-row"><label class="s-lbl">{{ t('lblNewPwd') }}</label><input type="password" class="s-inp" v-model="sNewPwd"></div>
+              <button class="btn btn-p" @click="changePwd">{{ t('changePwdBtn') }}</button>
+            </div>
+            <button class="btn btn-d" style="width:100%;margin-top:6px" @click="doLogout">{{ t('logoutBtn') }}</button>
+          </div>
+
+          <!-- 显示 -->
+          <div v-if="sTab==='display'">
+            <div class="s-title">{{ t('titleDisplay') }}</div>
+            <div class="s-card">
+              <div class="s-card-title">主机名 &amp; LOGO</div>
+              <div class="s-row"><label class="s-lbl">{{ t('lblHostnameDisplay') }}</label><input class="s-inp" v-model="sHost" placeholder="EasyPanel"></div>
+              <div class="s-row">
+                <label class="s-lbl">LOGO</label>
+                <div class="img-row" style="margin-bottom:8px">
+                  <input class="s-inp" v-model="sLogo" placeholder="https://..." @input="sLogoPrv=sLogo" style="flex:1">
+                  <label class="upbtn" for="logo-f">📁</label>
+                  <input type="file" id="logo-f" accept="image/*" style="display:none" @change="uploadLogo">
+                </div>
+                <img v-if="sLogoPrv" :src="sLogoPrv" style="width:48px;height:48px;border-radius:10px;object-fit:cover">
+              </div>
+              <button class="btn btn-p" @click="savePanelCfg">{{ t('saveBtn') }}</button>
+            </div>
+            <div class="s-card" style="margin-top:12px">
+              <div class="s-card-title">尺寸大小</div>
+              <div class="s-row"><label class="s-lbl">{{ t('lblHostnameSize') }}</label><div class="s-slider-row"><input type="range" class="s-slider" v-model="slH" min="24" max="96"><span class="s-slider-val">{{ slH }}px</span></div></div>
+              <div class="s-row"><label class="s-lbl">{{ t('lblClockSize') }}</label><div class="s-slider-row"><input type="range" class="s-slider" v-model="slC" min="10" max="36"><span class="s-slider-val">{{ slC }}px</span></div></div>
+              <div class="s-row"><label class="s-lbl">{{ t('lblIconSize') }}</label><div class="s-slider-row"><input type="range" class="s-slider" v-model="slI" min="40" max="130"><span class="s-slider-val">{{ slI }}px</span></div></div>
+              <div class="s-row"><label class="s-lbl">{{ t('lblAppnameSize') }}</label><div class="s-slider-row"><input type="range" class="s-slider" v-model="slA" min="8" max="22"><span class="s-slider-val">{{ slA }}px</span></div></div>
+            </div>
+            <div class="s-card" style="margin-top:12px">
+              <div class="s-card-title">图标样式</div>
+              <div class="s-row"><label class="s-lbl">图标圆角</label><div class="s-slider-row"><input type="range" class="s-slider" v-model="slR" min="0" max="50"><span class="s-slider-val">{{ slR }}%</span></div></div>
+              <div class="s-row"><label class="s-lbl">图标间距</label><div class="s-slider-row"><input type="range" class="s-slider" v-model="slG" min="8" max="60"><span class="s-slider-val">{{ slG }}px</span></div></div>
+              <div class="s-row"><label class="s-lbl">侧边距</label><div class="s-slider-row"><input type="range" class="s-slider" v-model="slP" min="10" max="120"><span class="s-slider-val">{{ slP }}px</span></div></div>
+            </div>
+            <button class="btn btn-p" @click="saveDisplaySettings" style="margin-top:12px">{{ t('saveDisplayBtn') }}</button>
+          </div>
+
+          <!-- 字体 -->
+          <div v-if="sTab==='fonts'">
+            <div class="s-title">{{ t('titleFonts') }}</div>
+            <div class="s-card">
+              <div class="s-card-title">选择字体</div>
+              <div class="s-row"><label class="s-lbl">主机名字体</label><select class="s-sel" v-model="fH"><option v-for="o in FONT_OPTIONS" :key="o.v" :value="o.v">{{ o.l }}</option></select></div>
+              <div class="s-row"><label class="s-lbl">时间字体</label><select class="s-sel" v-model="fC"><option v-for="o in FONT_OPTIONS" :key="o.v" :value="o.v">{{ o.l }}</option></select></div>
+              <div class="s-row"><label class="s-lbl">应用名称字体</label><select class="s-sel" v-model="fA"><option v-for="o in FONT_OPTIONS" :key="o.v" :value="o.v">{{ o.l }}</option></select></div>
+              <div class="s-row"><label class="s-lbl">设置界面字体</label><select class="s-sel" v-model="fU"><option v-for="o in FONT_OPTIONS" :key="o.v" :value="o.v">{{ o.l }}</option></select></div>
+              <button class="btn btn-p" @click="saveFontSettings" style="margin-top:4px">保存字体</button>
+            </div>
+          </div>
+
+          <!-- 主题色 -->
+          <div v-if="sTab==='theme'">
+            <div class="s-title">{{ t('titleTheme') }}</div>
+            <div class="s-card">
+              <div class="theme-grid">
+                <div v-for="th in THEMES" :key="th.id" class="theme-item" :class="{sel:curThemeId===th.id}" @click="applyTheme(th.id)">
+                  <div class="theme-dot" :style="{background:th.dot}"></div>
+                  <div class="theme-name">{{ th.name }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 时钟 -->
+          <div v-if="sTab==='clock'">
+            <div class="s-title">{{ t('titleClock') }}</div>
+            <div class="s-card">
+              <div class="t-row"><div><div class="t-lbl">{{ t('ckTime') }}</div></div><label class="sw"><input type="checkbox" v-model="clkCfg.show_time" @change="saveClk"><span class="sl"></span></label></div>
+              <div class="t-row"><div><div class="t-lbl">{{ t('ckSec') }}</div></div><label class="sw"><input type="checkbox" v-model="clkCfg.show_seconds" @change="saveClk"><span class="sl"></span></label></div>
+              <div class="t-row"><div><div class="t-lbl">{{ t('ckDate') }}</div><div class="t-sub">{{ t('ckDateSub') }}</div></div><label class="sw"><input type="checkbox" v-model="clkCfg.show_date" @change="saveClk"><span class="sl"></span></label></div>
+              <div class="t-row"><div><div class="t-lbl">{{ t('ckWeek') }}</div></div><label class="sw"><input type="checkbox" v-model="clkCfg.show_weekday" @change="saveClk"><span class="sl"></span></label></div>
+              <div class="t-row"><div><div class="t-lbl">{{ t('ckLunar') }}</div><div class="t-sub">{{ t('ckLunarSub') }}</div></div><label class="sw"><input type="checkbox" v-model="clkCfg.show_lunar" @change="saveClk"><span class="sl"></span></label></div>
+            </div>
+          </div>
+
+          <!-- 壁纸 -->
+          <div v-if="sTab==='wallpaper'">
+            <div class="s-title">{{ t('titleWallpaper') }}</div>
+            <div class="wp-grid">
+              <div v-for="url in WPS" :key="url" class="wp-thumb" :class="{sel:panelInfo.wallpaper===url}" @click="selWp(url)">
+                <img :src="url" loading="lazy">
+              </div>
+            </div>
+            <div class="s-row"><label class="s-lbl">{{ t('lblCustomUrl') }}</label>
+              <div class="img-row"><input class="s-inp" v-model="sWpUrl" placeholder="https://..." style="flex:1"><label class="upbtn" for="wp-f">📁</label><input type="file" id="wp-f" accept="image/*" style="display:none" @change="uploadWp"></div>
+            </div>
+            <button class="btn btn-p" @click="saveWp">{{ t('applyWpBtn') }}</button>
+          </div>
+
+          <!-- 账号管理 -->
+          <div v-if="sTab==='users'">
+            <div class="s-title">{{ t('titleUsers') }}</div>
+            <div class="info-box">{{ t('infoAccounts') }}</div>
+            <div class="s-card" style="overflow-x:auto;padding:0">
+              <table class="u-table">
+                <thead><tr><th>{{ t('thColAccount') }}</th><th>{{ t('thColNickname') }}</th><th>{{ t('thColRole') }}</th><th>{{ t('thColAction') }}</th></tr></thead>
+                <tbody>
+                  <tr v-for="u in users" :key="u.username">
+                    <td>{{ u.username }}<span v-if="u.username===curUser?.username" class="badge b-cur">{{ t('badgeCurrent') }}</span></td>
+                    <td>{{ u.nickname||'-' }}</td>
+                    <td><span class="badge" :class="u.is_admin?'b-admin':'b-user'">{{ u.is_admin?t('roleAdmin'):t('roleUser') }}</span></td>
+                    <td><button v-if="u.username!==curUser?.username" class="btn btn-d" style="padding:4px 10px;font-size:12px" @click="rmUser(u.username)">{{ t('deleteUserBtn') }}</button><span v-else>-</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="s-card" style="margin-top:12px">
+              <div class="s-title" style="font-size:14px;margin-bottom:12px;padding-bottom:10px;border-bottom-width:1px">{{ t('titleAddUser') }}</div>
+              <div class="s-row"><label class="s-lbl">{{ t('lblNuName') }}</label><input class="s-inp" v-model="nuName"></div>
+              <div class="s-row"><label class="s-lbl">{{ t('lblNuPwd') }}</label><input type="password" class="s-inp" v-model="nuPwd"></div>
+              <div class="s-row"><label class="s-lbl">{{ t('lblNuNick') }}</label><input class="s-inp" v-model="nuNick"></div>
+              <button class="btn btn-p" @click="addUser">{{ t('addUserBtn') }}</button>
+            </div>
+          </div>
+
+          <!-- 访问控制 -->
+          <div v-if="sTab==='access'">
+            <div class="s-title">{{ t('titleAccess') }}</div>
+            <div class="s-card">
+              <div class="t-row"><div><div class="t-lbl">{{ t('lblPubMode') }}</div><div class="t-sub">{{ t('subPubMode') }}</div></div><label class="sw"><input type="checkbox" v-model="pubToggle" @change="setPubMode(pubToggle)"><span class="sl"></span></label></div>
+            </div>
+            <div class="info-box" style="margin-top:12px"><b>{{ t('lblPrivateMode') }}</b>{{ t('descPrivateMode') }}<br><b>{{ t('lblPublicMode') }}</b>{{ t('descPublicMode') }}</div>
+          </div>
+
+          <!-- 数据管理 -->
+          <div v-if="sTab==='backup'">
+            <div class="s-title">{{ t('titleBackup') }}</div>
+            <div class="info-box" v-html="t('infoBackup').replace('\\n','&lt;br&gt;')"></div>
+            <div class="s-card">
+              <div class="backup-btns">
+                <button class="backup-btn" @click="exportData"><span class="b-ico">📤</span><span>{{ t('exportBtn') }}</span><span class="b-sub">{{ t('exportDesc') }}</span></button>
+                <label class="backup-btn" for="imp-f"><span class="b-ico">📥</span><span>{{ t('importBtn') }}</span><span class="b-sub">{{ t('importDesc') }}</span></label>
+                <input type="file" id="imp-f" accept=".json" style="display:none" @change="importData">
+              </div>
+            </div>
+            <div class="s-card" style="margin-top:12px">
+              <div class="t-lbl" style="margin-bottom:10px">{{ t('lblDanger') }}</div>
+              <button class="btn btn-d" @click="clearAllData" style="width:100%">{{ t('clearBtn') }}</button>
+            </div>
+          </div>
+
+          <!-- 语言 -->
+          <div v-if="sTab==='language'">
+            <div class="s-title">🌐 语言 / Language</div>
+            <div class="s-card">
+              <div class="s-row"><label class="s-lbl">语言 / Language</label>
+                <div class="lang-btns">
+                  <button class="lang-btn" :class="{active:lang==='zh'}" @click="setLang('zh')">🇨🇳 中文</button>
+                  <button class="lang-btn" :class="{active:lang==='en'}" @click="setLang('en')">🇬🇧 English</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <div class="toast" :class="{show:toastShow}">{{ toastMsg }}</div>
+</div>
+`
+}).mount('#app');
+</script>
+</body>
+</html>
