@@ -125,10 +125,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .s-backdrop.show{display:block}
 .s-panel{position:fixed;inset:0;z-index:760;display:none;align-items:center;justify-content:center;padding:20px}
 .s-panel.open{display:flex}
-.s-box{background:white;border-radius:22px;width:min(940px,100%);height:min(690px,90vh);display:flex;overflow:hidden;box-shadow:0 32px 80px rgba(168,85,247,.2)}
+.s-box{position:relative;background:white;border-radius:22px;width:min(940px,100%);height:min(690px,90vh);display:flex;overflow:hidden;box-shadow:0 32px 80px rgba(168,85,247,.2)}
 .s-nav{width:215px;flex-shrink:0;background:linear-gradient(180deg,#faf5ff 0%,#fdf2f8 100%);border-right:1px solid #ede8f5;display:flex;flex-direction:column;overflow-y:auto;position:relative}
 /* Red X button in top-left corner of nav */
-.s-close-top{position:absolute;top:12px;right:12px;width:20px;height:20px;border-radius:50%;background:#ff5f57;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,0);font-size:10px;font-weight:700;transition:all var(--tr);box-shadow:0 2px 5px rgba(255,95,87,.35);z-index:1}
+.s-close-top{position:absolute;top:14px;right:14px;width:22px;height:22px;border-radius:50%;background:#ff5f57;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:rgba(0,0,0,0);font-size:11px;font-weight:700;transition:all var(--tr);box-shadow:0 2px 6px rgba(255,95,87,.45);z-index:10}
 .s-close-top:hover{color:rgba(0,0,0,.5)}
 .s-close-top::after{content:'✕';position:absolute;opacity:0;transition:opacity var(--tr)}
 .s-close-top:hover::after{opacity:1}
@@ -317,9 +317,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 <div class="s-backdrop" id="s-backdrop" onclick="closeSettings()"></div>
 <div class="s-panel" id="s-panel">
   <div class="s-box">
+      <button class="s-close-top" id="s-close-top" onclick="closeSettings()" title="关闭"></button>
     <div class="s-nav">
       <!-- Red X close button in top-left of settings panel -->
-      <button class="s-close-top" id="s-close-top" onclick="closeSettings()" title="关闭"></button>
       <div class="s-nav-header">
         <div class="s-nav-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg></div>
         <span class="s-nav-t" id="s-nav-title">系统设置</span>
