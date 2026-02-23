@@ -311,47 +311,85 @@ body {
   white-space: nowrap;
 }
 
-/* Hover action buttons */
-.app-actions {
-  position: absolute;
-  top: -12px;
-  right: -8px;
-  display: none;
-  gap: 4px;
-  z-index: 10;
-}
-
-.app-card:hover .app-actions { display: flex; }
-
-.app-action-btn {
-  width: 26px; height: 26px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
+/* Group label toolbar */
+.group-label-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 13px;
+  gap: 10px;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.group-toolbar {
+  display: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.group-label-row:hover .group-toolbar { display: flex; }
+
+.toolbar-btn {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  border: 1.5px solid rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.9);
+  font-size: 14px;
   transition: all var(--transition);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-.app-action-btn.add {
+.toolbar-btn:hover {
+  background: rgba(255,255,255,0.3);
+  border-color: rgba(255,255,255,0.8);
+}
+
+/* Right-click context menu */
+.ctx-menu {
+  position: fixed;
+  z-index: 999;
   background: white;
-  color: #22c55e;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.1);
+  padding: 6px;
+  min-width: 130px;
+  display: none;
+  animation: ctx-in 0.15s ease;
 }
 
-.app-action-btn.edit {
-  background: white;
-  color: #3b82f6;
+@keyframes ctx-in {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
 
-.app-action-btn.delete {
-  background: white;
-  color: #ef4444;
+.ctx-menu.show { display: block; }
+
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  transition: background var(--transition);
+  user-select: none;
 }
 
-.app-action-btn:hover { transform: scale(1.1); }
+.ctx-item:hover { background: #f1f5f9; }
+
+.ctx-item.danger { color: #ef4444; }
+.ctx-item.danger:hover { background: #fef2f2; }
+
+.ctx-item .ctx-icon {
+  font-size: 15px;
+  width: 20px;
+  text-align: center;
+}
 
 /* Add app placeholder */
 .add-app-card {
@@ -1021,6 +1059,16 @@ body {
   </div>
 </div>
 
+<!-- Right-click context menu -->
+<div class="ctx-menu" id="ctx-menu">
+  <div class="ctx-item" onclick="ctxEdit()">
+    <span class="ctx-icon">✎</span> 编辑
+  </div>
+  <div class="ctx-item danger" onclick="ctxDelete()">
+    <span class="ctx-icon">🗑</span> 删除
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -1145,31 +1193,31 @@ async function loadApps() {
 function renderApps() {
   const section = document.getElementById('apps-section');
   section.innerHTML = '';
-  
-  // Group label
-  const label = document.createElement('div');
-  label.className = 'group-label';
-  label.textContent = 'APP';
-  section.appendChild(label);
-  
+
+  // Group label row with hover toolbar
+  const labelRow = document.createElement('div');
+  labelRow.className = 'group-label-row';
+  labelRow.innerHTML = `
+    <div class="group-label" style="margin-bottom:0">APP</div>
+    <div class="group-toolbar">
+      <button class="toolbar-btn" title="添加应用" onclick="openAddModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button class="toolbar-btn" title="拖拽图标可排序" style="cursor:default;opacity:0.7">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+      </button>
+    </div>
+  `;
+  section.appendChild(labelRow);
+
   const grid = document.createElement('div');
   grid.className = 'apps-grid';
   grid.id = 'apps-grid';
-  
+
   apps.forEach(app => {
     grid.appendChild(createAppCard(app));
   });
-  
-  // Add button
-  const addCard = document.createElement('div');
-  addCard.className = 'add-app-card';
-  addCard.onclick = () => openAddModal();
-  addCard.innerHTML = `
-    <div class="add-app-icon">+</div>
-    <div class="add-app-name">添加</div>
-  `;
-  grid.appendChild(addCard);
-  
+
   section.appendChild(grid);
 }
 
@@ -1178,8 +1226,8 @@ function createAppCard(app) {
   card.className = 'app-card';
   card.dataset.id = app.id;
   card.draggable = true;
-  
-  // Drag events
+
+  // Drag events for reordering
   card.addEventListener('dragstart', e => {
     dragSrcId = app.id;
     card.classList.add('dragging');
@@ -1194,39 +1242,49 @@ function createAppCard(app) {
       reorderApps(dragSrcId, app.id);
     }
   });
-  
-  // Icon
+
+  // Build icon HTML
+  const title = app.title || '?';
+  const fallbackText = title.substring(0, 2);
   let iconHtml = '';
   if (app.icon_type === 'image' && app.icon_image) {
-    iconHtml = `<img class="app-icon" src="${app.icon_image}" alt="${app.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-      <div class="app-icon-text" style="display:none">${(app.title||'?')[0]}</div>`;
+    iconHtml = `
+      <img class="app-icon" src="${app.icon_image}" alt="${title}"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="app-icon-text" style="display:none">${fallbackText}</div>`;
   } else {
-    const text = app.icon_text || (app.title||'?')[0];
-    iconHtml = `<div class="app-icon-text">${text}</div>`;
+    const displayText = (app.icon_text && app.icon_text.trim()) ? app.icon_text.trim() : fallbackText;
+    iconHtml = `<div class="app-icon-text">${displayText}</div>`;
   }
-  
-  card.innerHTML = `
-    <div class="app-actions">
-      <button class="app-action-btn add" title="添加" onclick="openAddModal(event)">+</button>
-      <button class="app-action-btn edit" title="编辑" onclick="openEditModal(event, '${app.id}')">✎</button>
-      <button class="app-action-btn delete" title="删除" onclick="quickDeleteApp(event, '${app.id}')">✕</button>
-    </div>
-    <div class="app-icon-wrap">
-      ${iconHtml}
-    </div>
-    <div class="app-name">${app.title}</div>
-  `;
-  
-  // Click to open
-  card.querySelector('.app-icon-wrap').addEventListener('click', () => {
+
+  const iconWrap = document.createElement('div');
+  iconWrap.className = 'app-icon-wrap';
+  iconWrap.innerHTML = iconHtml;
+
+  const nameEl = document.createElement('div');
+  nameEl.className = 'app-name';
+  nameEl.textContent = title;
+
+  card.appendChild(iconWrap);
+  card.appendChild(nameEl);
+
+  // Left-click: open URL
+  iconWrap.addEventListener('click', () => {
     const url = app.url;
+    if (!url) return;
     if (app.open_type === 'current') {
       window.location.href = url;
     } else {
       window.open(url, '_blank');
     }
   });
-  
+
+  // Right-click: context menu
+  card.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    showCtxMenu(e.clientX, e.clientY, app.id);
+  });
+
   return card;
 }
 
@@ -1247,7 +1305,48 @@ async function reorderApps(srcId, targetId) {
   }).catch(console.error);
 }
 
-// ===== MODAL =====
+// ===== CONTEXT MENU =====
+let ctxTargetId = null;
+
+function showCtxMenu(x, y, appId) {
+  ctxTargetId = appId;
+  const menu = document.getElementById('ctx-menu');
+  menu.classList.add('show');
+
+  // Keep menu inside viewport
+  const menuW = 140, menuH = 90;
+  const left = x + menuW > window.innerWidth ? x - menuW : x;
+  const top  = y + menuH > window.innerHeight ? y - menuH : y;
+  menu.style.left = left + 'px';
+  menu.style.top  = top  + 'px';
+}
+
+function hideCtxMenu() {
+  document.getElementById('ctx-menu').classList.remove('show');
+  ctxTargetId = null;
+}
+
+function ctxEdit() {
+  hideCtxMenu();
+  if (ctxTargetId) openEditModal(null, ctxTargetId);
+}
+
+async function ctxDelete() {
+  hideCtxMenu();
+  if (!ctxTargetId) return;
+  if (!confirm('确认删除此应用？')) return;
+  try {
+    await api(`/api/apps/${ctxTargetId}`, { method: 'DELETE' });
+    await loadApps();
+    showToast('已删除');
+  } catch(e) {
+    showToast('删除失败');
+  }
+}
+
+// Hide menu on any click/scroll
+document.addEventListener('click', hideCtxMenu);
+document.addEventListener('scroll', hideCtxMenu, true);
 function openAddModal(e) {
   if (e) e.stopPropagation();
   editingAppId = null;
@@ -1370,18 +1469,6 @@ async function deleteCurrentApp() {
   try {
     await api(`/api/apps/${editingAppId}`, { method: 'DELETE' });
     closeModal();
-    await loadApps();
-    showToast('已删除');
-  } catch(e) {
-    showToast('删除失败');
-  }
-}
-
-async function quickDeleteApp(e, id) {
-  e.stopPropagation();
-  if (!confirm('确认删除？')) return;
-  try {
-    await api(`/api/apps/${id}`, { method: 'DELETE' });
     await loadApps();
     showToast('已删除');
   } catch(e) {
