@@ -169,6 +169,15 @@
                 <label class="sw"><input type="checkbox" v-model="form.pubMode" @change="setPubMode" /><span class="sl"></span></label>
               </div>
             </div>
+            <div class="s-card" style="margin-top:12px">
+              <div class="t-row">
+                <div><div class="t-lbl">{{ t('lblNetMode') }}</div><div class="t-sub">{{ t('subNetMode') }}</div></div>
+                <div class="net-toggle">
+                  <button class="net-btn" :class="{ active: form.netMode === 'lan' }" @click="setNetMode('lan')">{{ t('netLan') }}</button>
+                  <button class="net-btn" :class="{ active: form.netMode === 'wan' }" @click="setNetMode('wan')">{{ t('netWan') }}</button>
+                </div>
+              </div>
+            </div>
             <div class="info-box" style="margin-top:12px">
               <b>{{ t('lblPrivateMode') }}</b>{{ t('descPrivateMode') }}<br>
               <b>{{ t('lblPublicMode') }}</b>{{ t('descPublicMode') }}
@@ -220,12 +229,13 @@ import { THEMES, WPS, FONT_OPTIONS, curThemeId, applyThemeCss } from '../composa
 import { resolveFont } from '../composables/useTheme.js'
 
 const { t } = useI18n()
-const emit = defineEmits(['toast', 'logout', 'panelUpdated', 'clearData'])
+const emit = defineEmits(['toast', 'logout', 'panelUpdated', 'clearData', 'netModeChanged'])
 
 const props = defineProps({
   user: Object,
   panelInfo: Object,
   pubModeValue: Boolean,
+  netModeValue: String,
   dispSet: Object,
   fontSet: Object,
   clkCfg: Object,
@@ -240,6 +250,7 @@ const form = reactive({
   nick: '', oldPwd: '', newPwd: '',
   hostname: '', logo: '', logoPreview: '', wallpaper: '',
   pubMode: false,
+  netMode: 'lan',
   nuName: '', nuPwd: '', nuNick: '',
   display: { hostnameSize: 56, clockSize: 16, iconSize: 78, appNameSize: 12, iconRadius: 26, iconGap: 22, sidePadding: 52 },
   fonts: { hostname: 'system', clock: 'system', appname: 'system', ui: 'system' },
@@ -291,6 +302,7 @@ function buildPayload() {
     icon_size: +form.display.iconSize, app_name_size: +form.display.appNameSize,
     icon_radius: +form.display.iconRadius, icon_gap: +form.display.iconGap,
     side_padding: +form.display.sidePadding,
+    network_mode: form.netMode,
     font_hostname: form.fonts.hostname, font_clock: form.fonts.clock,
     font_appname: form.fonts.appname, font_ui: form.fonts.ui,
   }
@@ -304,6 +316,7 @@ async function open() {
   form.logoPreview = props.panelInfo?.logo || ''
   form.wallpaper = props.panelInfo?.wallpaper || ''
   form.pubMode = props.pubModeValue || false
+  form.netMode = props.netModeValue || 'lan'
   Object.assign(form.display, props.dispSet)
   Object.assign(form.fonts, props.fontSet)
   Object.assign(form.clock, props.clkCfg)
@@ -384,6 +397,15 @@ async function removeUser(username) {
   try { await apiCall(`/api/users/${username}`, { method: 'DELETE' }); await loadUsers(); emit('toast', t('tDeleted')) }
   catch { emit('toast', t('tDeleteFailed')) }
 }
+async function setNetMode(mode) {
+  form.netMode = mode
+  const sv = buildPayload(); sv.network_mode = mode
+  try {
+    await apiCall('/api/settings', { method: 'PUT', body: JSON.stringify(sv) })
+    emit('netModeChanged', mode)
+    emit('toast', mode === 'lan' ? t('netSwitchedLan') : t('netSwitchedWan'))
+  } catch { emit('toast', t('tFailed')); form.netMode = mode === 'lan' ? 'wan' : 'lan' }
+}
 async function setPubMode() {
   const v = form.pubMode
   try { await apiCall('/api/publicmode', { method: 'PUT', body: JSON.stringify({ public_mode: v }) }); emit('toast', v ? t('pubOn') : t('pubOff')); emit('panelUpdated') }
@@ -458,6 +480,10 @@ defineExpose({ open, close })
 .backup-btn { flex: 1; min-width: 140px; padding: 13px; border-radius: 12px; border: 2px dashed #d8b4fe; background: #faf5ff; cursor: pointer; font-size: 14px; font-weight: 600; color: #7c3aed; transition: all var(--tr); display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .backup-btn:hover { background: #f3e8ff; border-color: var(--h1); transform: translateY(-2px); }
 .b-ico { font-size: 24px; } .b-sub { font-size: 11px; color: #94a3b8; font-weight: 500; }
+.net-toggle { display: flex; gap: 4px; }
+.net-btn { padding: 7px 16px; border: 1.5px solid #ede8f5; border-radius: 9px; background: white; cursor: pointer; font-size: 13px; font-weight: 600; color: #6b7280; transition: all var(--tr); }
+.net-btn:hover { border-color: var(--h1); color: var(--h1); }
+.net-btn.active { background: var(--grad); color: white; border-color: transparent; box-shadow: 0 3px 10px color-mix(in srgb,var(--h1) 30%,transparent); }
 .lang-btns { display: flex; gap: 8px; }
 .lang-btn { flex: 1; padding: 9px 14px; border: 2px solid #ede8f5; border-radius: 11px; background: white; cursor: pointer; font-size: 14px; font-weight: 700; color: #6b7280; transition: all var(--tr); text-align: center; }
 .lang-btn:hover { border-color: var(--h1); color: var(--h1); }
