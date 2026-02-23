@@ -32,7 +32,7 @@ func Auth() gin.HandlerFunc {
 		}
 
 		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-			return []byte(config.Current.JWTSecret), nil
+			return []byte(config.Main.JWTSecret), nil
 		})
 		if err != nil || !token.Valid {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
