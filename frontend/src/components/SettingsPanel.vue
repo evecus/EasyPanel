@@ -317,8 +317,8 @@ async function open() {
   Object.assign(form.fonts, props.fontSet)
   Object.assign(form.clock, props.clkCfg)
   form.nuName = ''; form.nuPwd = ''; form.nuNick = ''
-  await loadUsers()
-  visible.value = true
+  visible.value = true   // 先显示面板，不等 loadUsers
+  loadUsers()            // 异步加载用户列表，不阻塞打开
 }
 function close() { visible.value = false }
 
