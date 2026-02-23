@@ -33,7 +33,9 @@ type MainConfig struct {
 type AppItem struct {
 	ID        string `json:"id"`
 	Title     string `json:"title"`
-	URL       string `json:"url"`
+	URL       string `json:"url"`      // 保留兼容旧数据
+	UrlLan    string `json:"url_lan"`  // 内网地址
+	UrlWan    string `json:"url_wan"`  // 公网地址
 	IconType  string `json:"icon_type"`
 	IconText  string `json:"icon_text"`
 	IconImage string `json:"icon_image"`
@@ -69,6 +71,7 @@ type PanelSettings struct {
 	FontClock    string       `json:"font_clock"`
 	FontAppname  string       `json:"font_appname"`
 	FontUI       string       `json:"font_ui"`
+	NetworkMode  string       `json:"network_mode"` // "lan" or "wan"
 }
 
 // ── 全局状态 ─────────────────────────────────────────────────────
@@ -124,7 +127,7 @@ func createDefaultMain() error {
 	rand.Read(secret)
 	hash, _ := bcrypt.GenerateFromPassword([]byte("admin"), bcrypt.DefaultCost)
 	Main = &MainConfig{
-		Port:       3088,
+		Port:       3000,
 		JWTSecret:  hex.EncodeToString(secret),
 		PublicMode: false,
 		Users:      []User{{Username: "admin", Password: string(hash), Nickname: "Admin", IsAdmin: true}},
