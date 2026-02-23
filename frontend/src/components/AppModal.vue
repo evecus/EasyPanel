@@ -16,7 +16,7 @@
         </div>
         <div>
           <div class="preview-t">{{ appTitle || t('appNamePrev') }}</div>
-          <div class="preview-u">{{ appUrl || 'https://...' }}</div>
+          <div class="preview-u">{{ previewUrl || 'https://...' }}</div>
         </div>
       </div>
 
@@ -38,7 +38,21 @@
       </div>
 
       <div class="fr"><label class="fl">{{ t('titleLbl') }}</label><input type="text" class="fi2" v-model="appTitle" maxlength="20" /></div>
-      <div class="fr"><label class="fl">{{ t('urlLbl') }}</label><input type="text" class="fi2" v-model="appUrl" placeholder="http(s)://" /></div>
+
+      <!-- 内网地址 -->
+      <div class="fr">
+        <label class="fl">{{ t('urlLanLbl') }}</label>
+        <input type="text" class="fi2" v-model="appUrlLan" placeholder="10.0.0.1:8080 或 http://10.0.0.1:8080" />
+      </div>
+
+      <!-- 公网地址 -->
+      <div class="fr">
+        <label class="fl">{{ t('urlWanLbl') }}</label>
+        <input type="text" class="fi2" v-model="appUrlWan" placeholder="example.com 或 https://example.com" />
+      </div>
+
+      <div class="url-hint">{{ t('urlHint') }}</div>
+
       <div class="fr">
         <label class="fl">{{ t('openLbl') }}</label>
         <select class="fi2" v-model="appOpen">
@@ -70,8 +84,20 @@ const iconType = ref('text')
 const iconTxt = ref('')
 const iconUrl = ref('')
 const appTitle = ref('')
-const appUrl = ref('')
+const appUrlLan = ref('')
+const appUrlWan = ref('')
 const appOpen = ref('new_tab')
+
+// 地址处理：有协议头原样保存，无协议头用 // 前缀（继承当前页面协议）
+function normalizeUrl(url) {
+  const u = url.trim()
+  if (!u) return ''
+  if (/^https?:\/\//i.test(u)) return u   // 有 http:// 或 https://，原样
+  if (u.startsWith('//')) return u         // 已经是协议相对URL
+  return '//' + u                          // 裸地址，加 // 前缀
+}
+
+const previewUrl = computed(() => appUrlLan.value || appUrlWan.value)
 
 const previewIconText = computed(() => {
   if (iconType.value === 'text') return (iconTxt.value || (appTitle.value || '?').substring(0, 2)).substring(0, 2)
@@ -81,7 +107,7 @@ const previewIconText = computed(() => {
 function openAdd() {
   editId.value = null
   iconType.value = 'text'; iconTxt.value = ''; iconUrl.value = ''
-  appTitle.value = ''; appUrl.value = ''; appOpen.value = 'new_tab'
+  appTitle.value = ''; appUrlLan.value = ''; appUrlWan.value = ''; appOpen.value = 'new_tab'
   visible.value = true
 }
 
@@ -91,7 +117,9 @@ function openEdit(app) {
   iconTxt.value = app.icon_text || ''
   iconUrl.value = app.icon_image || ''
   appTitle.value = app.title || ''
-  appUrl.value = app.url || ''
+  // 兼容旧数据：旧的 url 字段迁移到 url_lan
+  appUrlLan.value = app.url_lan || app.url || ''
+  appUrlWan.value = app.url_wan || ''
   appOpen.value = app.open_type || 'new_tab'
   visible.value = true
 }
@@ -99,9 +127,21 @@ function openEdit(app) {
 function close() { visible.value = false }
 
 async function save() {
-  const title = appTitle.value.trim(), url = appUrl.value.trim()
-  if (!title || !url) { emit('toast', t('fillTitleUrl')); return }
-  const data = { title, url, icon_type: iconType.value, icon_text: iconTxt.value, icon_image: iconUrl.value, open_type: appOpen.value }
+  const title = appTitle.value.trim()
+  const lan = appUrlLan.value.trim()
+  const wan = appUrlWan.value.trim()
+  if (!title) { emit('toast', t('fillTitle')); return }
+  if (!lan && !wan) { emit('toast', t('fillAtLeastOneUrl')); return }
+  const data = {
+    title,
+    url: '',           // 清空旧字段
+    url_lan: normalizeUrl(lan),
+    url_wan: normalizeUrl(wan),
+    icon_type: iconType.value,
+    icon_text: iconTxt.value,
+    icon_image: iconUrl.value,
+    open_type: appOpen.value
+  }
   try {
     if (editId.value) await apiCall(`/api/apps/${editId.value}`, { method: 'PUT', body: JSON.stringify(data) })
     else await apiCall('/api/apps', { method: 'POST', body: JSON.stringify(data) })
@@ -148,6 +188,7 @@ defineExpose({ openAdd, openEdit })
   box-shadow: 0 24px 64px rgba(168,85,247,.18); animation: pop-in .2s ease;
   border: 1px solid rgba(168,85,247,.1);
 }
+@keyframes pop-in { from { transform: scale(.93) translateY(12px); opacity: 0 } to { transform: scale(1) translateY(0); opacity: 1 } }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
 .modal-title { font-size: 17px; font-weight: 800; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .close-btn { width: 32px; height: 32px; border: none; background: #f5f3ff; border-radius: 9px; cursor: pointer; font-size: 15px; display: flex; align-items: center; justify-content: center; color: #64748b; transition: all var(--tr); }
@@ -167,5 +208,6 @@ defineExpose({ openAdd, openEdit })
 .img-row .fi2 { flex: 1; }
 .upbtn { padding: 11px 13px; border: 1.5px solid #ede8f5; border-radius: 11px; background: white; cursor: pointer; font-size: 13px; font-weight: 600; color: #94a3b8; white-space: nowrap; transition: all var(--tr); display: flex; align-items: center; gap: 5px; }
 .upbtn:hover { border-color: var(--h1); color: var(--h1); }
+.url-hint { font-size: 11px; color: #94a3b8; margin: -8px 0 14px; line-height: 1.5; }
 .mfooter { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #f5f3ff; }
 </style>
