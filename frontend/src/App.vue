@@ -8,6 +8,15 @@
       <!-- Header -->
       <div class="dash-header" :style="headerStyle">
         <img v-if="panelInfo.logo" class="dash-logo" :src="panelInfo.logo" alt="" />
+        <button class="icon-btn net-btn" @click="toggleNet" :title="netMode === 'lan' ? t('switchToWan') : t('switchToLan')">
+          <svg v-if="netMode === 'lan'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+        </button>
         <button class="icon-btn" @click="onSettingsClick">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="3"/>
@@ -91,6 +100,8 @@
     :user="curUser"
     :panel-info="panelInfo"
     :pub-mode-value="pubMode"
+    :net-mode-value="netMode"
+    @net-mode-changed="v => netMode = v"
     :disp-set="dispSet"
     :font-set="fontSet"
     :clk-cfg="clkCfg"
@@ -130,6 +141,7 @@ const apps      = ref([])
 const panelInfo = ref({})
 const curUser   = ref(null)
 const pubMode   = ref(false)
+const netMode   = ref('lan')  // 'lan' | 'wan'
 const clkCfg    = reactive({ show_time: true, show_date: true, show_weekday: true, show_lunar: false, show_seconds: false })
 const clockHtml = ref('')
 const dispSet   = reactive({ hostnameSize: 76, clockSize: 24, iconSize: 64, appNameSize: 14, iconRadius: 25, iconGap: 22, sidePadding: 52 })
@@ -179,6 +191,7 @@ async function loadPanel() {
     const info = await apiCall('/api/panel')
     panelInfo.value = info
     pubMode.value = info.public_mode || false
+    netMode.value = info.network_mode || 'lan'
     if (info.clock) Object.assign(clkCfg, info.clock)
     const sl = info.language || localStorage.getItem('ep_lang') || 'zh'
     lang.value = sl; localStorage.setItem('ep_lang', sl)
@@ -237,8 +250,18 @@ async function onSettingsClick() {
 function onAddApp() { requireAuth(() => appModal.value?.openAdd()) }
 function onAppClick(app) {
   if (sortMode.value) return
-  if (!app.url) return
-  app.open_type === 'current' ? (window.location.href = app.url) : window.open(app.url, '_blank')
+  // 根据网络模式选地址，优先用对应模式地址，没有则 fallback 到另一个，再 fallback 旧 url 字段
+  let url = ''
+  if (netMode.value === 'lan') {
+    url = app.url_lan || app.url_wan || app.url || ''
+  } else {
+    url = app.url_wan || app.url_lan || app.url || ''
+  }
+  if (!url) return
+  app.open_type === 'current' ? (window.location.href = url) : window.open(url, '_blank')
+}
+function toggleNet() {
+  netMode.value = netMode.value === 'lan' ? 'wan' : 'lan'
 }
 function onAppContextMenu(e, id) {
   requireAuth(() => ctxMenu.value?.show(e.clientX, e.clientY, id))
@@ -314,6 +337,7 @@ onUnmounted(() => { if (clkTimer) clearInterval(clkTimer) })
 .dash-content { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
 .dash-header { display: flex; justify-content: flex-start; align-items: flex-start; }
 .dash-logo { height: 34px; width: auto; border-radius: 8px; object-fit: contain; }
+.net-btn { position: fixed; top: 22px; right: 100px; }
 .icon-btn { position: fixed; top: 22px; right: 52px; z-index: 10; width: 40px; height: 40px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 17px; transition: all var(--tr); border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.15); backdrop-filter: blur(12px); }
 .icon-btn:hover { background: rgba(255,255,255,.28); transform: translateY(-1px); }
 .hero { text-align: center; padding: 32px 20px 40px; color: white; flex-shrink: 0; }
