@@ -2,9 +2,10 @@
   <div class="login-overlay" v-if="visible">
     <div class="login-card">
       <div class="login-logo-wrap">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
-          <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
-          <rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="6" width="18" height="2.5" rx="1.25" fill="white"/>
+          <rect x="3" y="11" width="13" height="2.5" rx="1.25" fill="white" fill-opacity="0.75"/>
+          <rect x="3" y="16" width="15.5" height="2.5" rx="1.25" fill="white" fill-opacity="0.5"/>
         </svg>
       </div>
       <div class="login-title"><span>EasyPanel</span></div>
