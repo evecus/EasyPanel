@@ -11,30 +11,30 @@ import (
 )
 
 type User struct {
-	Username string `yaml:"username"`
-	Password string `yaml:"password"` // bcrypt hashed
-	Nickname string `yaml:"nickname"`
-	IsAdmin  bool   `yaml:"is_admin"`
+	Username string `yaml:"username" json:"username"`
+	Password string `yaml:"password" json:"password"`
+	Nickname string `yaml:"nickname" json:"nickname"`
+	IsAdmin  bool   `yaml:"is_admin" json:"is_admin"`
 }
 
 type AppItem struct {
-	ID          string `yaml:"id"`
-	Title       string `yaml:"title"`
-	Description string `yaml:"description"`
-	URL         string `yaml:"url"`
-	IconType    string `yaml:"icon_type"` // "text" or "image"
-	IconText    string `yaml:"icon_text,omitempty"`
-	IconImage   string `yaml:"icon_image,omitempty"` // URL or local path
-	Group       string `yaml:"group,omitempty"`
-	Order       int    `yaml:"order"`
-	OpenType    string `yaml:"open_type"` // "new_tab" or "current"
+	ID          string `yaml:"id"          json:"id"`
+	Title       string `yaml:"title"        json:"title"`
+	Description string `yaml:"description"  json:"description"`
+	URL         string `yaml:"url"          json:"url"`
+	IconType    string `yaml:"icon_type"    json:"icon_type"`
+	IconText    string `yaml:"icon_text,omitempty"  json:"icon_text"`
+	IconImage   string `yaml:"icon_image,omitempty" json:"icon_image"`
+	Group       string `yaml:"group,omitempty"      json:"group"`
+	Order       int    `yaml:"order"        json:"order"`
+	OpenType    string `yaml:"open_type"    json:"open_type"`
 }
 
 type PanelSettings struct {
-	Title     string `yaml:"title"`
-	Logo      string `yaml:"logo,omitempty"`
-	Wallpaper string `yaml:"wallpaper,omitempty"` // URL or local path
-	Hostname  string `yaml:"hostname"`
+	Title     string `yaml:"title"               json:"title"`
+	Logo      string `yaml:"logo,omitempty"      json:"logo"`
+	Wallpaper string `yaml:"wallpaper,omitempty" json:"wallpaper"`
+	Hostname  string `yaml:"hostname"            json:"hostname"`
 }
 
 type Config struct {
