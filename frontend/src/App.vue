@@ -1,7 +1,7 @@
 <template>
   <!-- Dashboard background -->
   <div id="dashboard">
-    <div class="wp-bg" :style="{ backgroundImage: `url(${wallpaper})` }"></div>
+    <div class="wp-bg" :style="wpStyle"></div>
     <div class="wp-overlay"></div>
 
     <div class="dash-content">
@@ -235,7 +235,14 @@ const dragOverId = ref(null)
 let clkTimer = null
 
 // ── Computed ────────────────────────────────────────────────────
-const wallpaper = computed(() => panelInfo.value.wallpaper || curTheme.value.wp || WPS[0])
+const fallbackGrad = computed(() => curTheme.value.grad || 'linear-gradient(135deg,#6b21a8 0%,#a855f7 40%,#ec4899 100%)')
+const wallpaperUrl  = computed(() => panelInfo.value.wallpaper || curTheme.value.wp || '/default-wallpaper')
+const wpStyle = computed(() => ({
+  background: fallbackGrad.value,
+  backgroundImage: wallpaperUrl.value ? `url(${wallpaperUrl.value})` : 'none',
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+}))
 
 const iconBorderRadius = computed(() => Math.round((dispSet.iconRadius || 26) / 100 * dispSet.iconSize) + 'px')
 const iconWrapStyle = computed(() => ({ width: dispSet.iconSize + 'px', height: dispSet.iconSize + 'px', borderRadius: iconBorderRadius.value }))
