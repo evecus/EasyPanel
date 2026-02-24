@@ -99,7 +99,6 @@ func refreshSystemd() {
 	sdCache.updatedAt = time.Now()
 	sdCache.ready = true
 	sdCache.mu.Unlock()
-	log.Printf("[cache] systemd refreshed: %d services", len(data))
 }
 
 // ── Docker 缓存 ───────────────────────────────────────────────────
@@ -180,7 +179,6 @@ func refreshDocker() {
 	dkCache.updatedAt = time.Now()
 	dkCache.ready = true
 	dkCache.mu.Unlock()
-	log.Printf("[cache] docker refreshed: %d containers", len(data))
 }
 
 // ── 统一启动入口（在 main.go 中调用）────────────────────────────
@@ -191,5 +189,4 @@ func refreshDocker() {
 func StartBackgroundCache(featureSystemd func() bool, featureDocker func() bool) {
 	startSystemdCache(featureSystemd)
 	startDockerCache(featureDocker)
-	log.Printf("[cache] background cache goroutines started (interval: %s)", cacheInterval())
 }
