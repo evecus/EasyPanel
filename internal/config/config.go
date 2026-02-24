@@ -188,7 +188,7 @@ func loadSettings() error {
 			Wallpaper:    "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1920&q=80",
 			Theme:        "purple-pink",
 			Language:     "zh",
-			HostnameSize: 76,
+			HostnameSize: 70,
 			ClockSize:    24,
 			IconSize:     64,
 			AppNameSize:  14,
