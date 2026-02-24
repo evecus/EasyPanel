@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -22,6 +23,9 @@ var Version = "dev"
 
 //go:embed web/dist
 var distFS embed.FS
+
+//go:embed assets/wallpaper.*
+var assetsFS embed.FS
 
 func main() {
 	if exe, err := os.Executable(); err == nil {
@@ -67,6 +71,38 @@ func main() {
 	r.Static("/uploads", "./"+config.DataDir+"/uploads")
 
 	// ── Public API ─────────────────────────────────────────────
+	// ── Embedded default wallpaper ────────────────────────────────
+	r.GET("/default-wallpaper", func(c *gin.Context) {
+		entries, err := assetsFS.ReadDir("assets")
+		if err != nil || len(entries) == 0 {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		var wpEntry fs.DirEntry
+		for _, e := range entries {
+			if !e.IsDir() {
+				wpEntry = e
+				break
+			}
+		}
+		if wpEntry == nil {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		data, err := assetsFS.ReadFile("assets/" + wpEntry.Name())
+		if err != nil {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		ext := strings.ToLower(filepath.Ext(wpEntry.Name()))
+		mimeType := mime.TypeByExtension(ext)
+		if mimeType == "" {
+			mimeType = "image/jpeg"
+		}
+		c.Header("Cache-Control", "public, max-age=86400")
+		c.Data(http.StatusOK, mimeType, data)
+	})
+
 	r.POST("/api/login", handler.Login)
 	r.GET("/api/panel", handler.GetPanelInfo)
 	r.GET("/api/apps", handler.GetApps)
