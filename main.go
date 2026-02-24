@@ -54,7 +54,15 @@ func main() {
 
 	fmt.Printf("\n🚀 EasyPanel running on http://0.0.0.0:%d\n", config.Main.Port)
 
-	r := gin.Default()
+	// 自定义 Logger：只打印 4xx/5xx 错误，过滤正常访问日志
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(func(c *gin.Context) {
+		c.Next()
+		if c.Writer.Status() >= 400 {
+			log.Printf("[%d] %s %s", c.Writer.Status(), c.Request.Method, c.Request.URL.Path)
+		}
+	})
 
 	r.Static("/uploads", "./"+config.DataDir+"/uploads")
 
