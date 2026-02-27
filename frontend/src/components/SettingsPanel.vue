@@ -383,17 +383,23 @@ const TABS = [
   { id: 'about',     icon: 'ℹ️',  labelKey: 'niAbout' },
 ]
 
-const sizeSliders = [
-  { key: 'hostnameSize', label: 'lblHostnameSize', min: 56, max: 96,  unit: 'px' },
-  { key: 'clockSize',    label: 'lblClockSize',    min: 10, max: 38,  unit: 'px' },
-  { key: 'iconSize',     label: 'lblIconSize',     min: 44, max: 84,  unit: 'px' },
-  { key: 'appNameSize',  label: 'lblAppnameSize',  min: 6,  max: 22,  unit: 'px' },
-]
-const iconSliders = [
-  { key: 'iconRadius',  label: 'iconRadius',  min: 0,  max: 50,  unit: '%' },
-  { key: 'iconGap',     label: 'iconGap',     min: 8,  max: 36,  unit: 'px' },
-  { key: 'sidePadding', label: 'sidePadding', min: 32, max: 72,  unit: 'px' },
-]
+const sizeSliders = computed(() => {
+  const mob = form.dispDevice === 'mobile'
+  return [
+    { key: 'hostnameSize', label: 'lblHostnameSize', min: mob ? 36 : 56, max: mob ? 74 : 96, unit: 'px' },
+    { key: 'clockSize',    label: 'lblClockSize',    min: 10, max: 38,  unit: 'px' },
+    { key: 'iconSize',     label: 'lblIconSize',     min: 44, max: 84,  unit: 'px' },
+    { key: 'appNameSize',  label: 'lblAppnameSize',  min: 6,  max: 22,  unit: 'px' },
+  ]
+})
+const iconSliders = computed(() => {
+  const mob = form.dispDevice === 'mobile'
+  return [
+    { key: 'iconRadius',  label: 'iconRadius',  min: 0,  max: 50,                unit: '%'  },
+    { key: 'iconGap',     label: 'iconGap',     min: 4,  max: mob ? 28 : 36,    unit: 'px' },
+    { key: 'sidePadding', label: 'sidePadding', min: mob ? 8 : 32, max: mob ? 48 : 72, unit: 'px' },
+  ]
+})
 const fontFields = [
   { key: 'hostname', label: 'fontHostname' },
   { key: 'clock',    label: 'fontClock' },
