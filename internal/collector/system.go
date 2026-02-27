@@ -113,7 +113,8 @@ var prevNetTime  = time.Now()
 func GetSystemInfo() SystemInfo {
 	info, _ := host.Info()
 	cpuInfos, _ := cpu.Info()
-	threads, _ := cpu.Counts(true)
+	threads, _ := cpu.Counts(true)   // 逻辑线程数（含超线程）
+	physCores, _ := cpu.Counts(false) // 物理核心数
 
 	si := SystemInfo{Arch: runtime.GOARCH, CPUThreads: threads}
 	if info != nil {
@@ -128,7 +129,22 @@ func GetSystemInfo() SystemInfo {
 	}
 	if len(cpuInfos) > 0 {
 		si.CPUModel = cpuInfos[0].ModelName
-		si.CPUCores = cpuInfos[0].Cores
+	}
+	// cpu.Counts(false) 直接统计唯一物理核心，比 cpuInfos[0].Cores 准确
+	if physCores > 0 {
+		si.CPUCores = int32(physCores)
+	} else if len(cpuInfos) > 0 {
+		// 兜底：遍历所有条目，统计唯一 (physicalId, coreId) 组合
+		type coreKey struct{ phys, core int32 }
+		seen := map[coreKey]struct{}{}
+		for _, c := range cpuInfos {
+			seen[coreKey{c.PhysicalID, c.CoreID}] = struct{}{}
+		}
+		if len(seen) > 0 {
+			si.CPUCores = int32(len(seen))
+		} else {
+			si.CPUCores = cpuInfos[0].Cores
+		}
 	}
 
 	// Local IPv4 - 只取第一个私网 IPv4 地址
