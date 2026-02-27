@@ -76,6 +76,14 @@
                   <span class="s-slider-val">{{ form.display[sl.key] }}{{ sl.unit }}</span>
                 </div>
               </div>
+              <!-- 图标名称显示开关 -->
+              <div class="t-row" style="margin-top:12px;padding-top:12px;border-top:1px solid #f0f4ff">
+                <div>
+                  <div class="t-lbl">{{ t('lblShowAppName') }}</div>
+                  <div class="t-sub">{{ t('lblShowAppNameSub') }}</div>
+                </div>
+                <label class="sw"><input type="checkbox" v-model="form.showAppName" /><span class="sl"></span></label>
+              </div>
             </div>
             <button class="btn btn-p" @click="saveDisplay" style="margin-top:12px">{{ t('saveDisplayBtn') }}</button>
 
@@ -294,6 +302,7 @@ const props = defineProps({
   featureProcess: Boolean,
   featureSystemd: Boolean,
   featureDocker:  Boolean,
+  showAppName:    { type: Boolean, default: true },
   dispSet: Object,
   fontSet: Object,
   clkCfg: Object,
@@ -323,6 +332,7 @@ const form = reactive({
   featureProcess: false,
   featureSystemd: false,
   featureDocker:  false,
+  showAppName:    true,
   nuName: '', nuPwd: '', nuNick: '',
   display: { hostnameSize: 56, clockSize: 16, iconSize: 78, appNameSize: 12, iconRadius: 26, iconGap: 22, sidePadding: 52 },
   fonts: { hostname: 'system', clock: 'system', appname: 'system', ui: 'system' },
@@ -380,6 +390,7 @@ function buildPayload() {
     feature_process: form.featureProcess,
     feature_systemd: form.featureSystemd,
     feature_docker:  form.featureDocker,
+    show_app_name:   form.showAppName,
     font_hostname: form.fonts.hostname, font_clock: form.fonts.clock,
     font_appname: form.fonts.appname, font_ui: form.fonts.ui,
   }
@@ -398,6 +409,7 @@ async function open() {
   form.featureProcess = props.featureProcess || false
   form.featureSystemd = props.featureSystemd || false
   form.featureDocker  = props.featureDocker  || false
+  form.showAppName    = props.showAppName !== false
   Object.assign(form.display, props.dispSet)
   Object.assign(form.fonts, props.fontSet)
   Object.assign(form.clock, props.clkCfg)
@@ -432,7 +444,7 @@ async function uploadLogo(e) {
 }
 async function saveDisplay() {
   const sv = buildPayload()
-  try { await apiCall('/api/settings', { method: 'PUT', body: JSON.stringify(sv) }); emit('panelUpdated'); emit('toast', t('tSaved')) }
+  try { await apiCall('/api/settings', { method: 'PUT', body: JSON.stringify(sv) }); emit('showAppNameChanged', form.showAppName); emit('panelUpdated'); emit('toast', t('tSaved')) }
   catch { emit('toast', t('tFailed')) }
 }
 async function saveFonts() {
