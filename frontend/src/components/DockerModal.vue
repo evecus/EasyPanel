@@ -322,8 +322,6 @@ defineExpose({ open, close })
 
 /* 移动端：全屏底部弹出，卡片全宽单列 */
 @media(max-width:700px) {
-  .m-overlay { padding:0;align-items:center;justify-content:center }
-  .m-box { width:calc(100% - 24px);max-width:100%;border-radius:20px;height:calc(100vh - 160px);max-height:calc(100vh - 160px);overflow:hidden }
   .m-head { padding:16px 18px }
   .m-search { display:none }
   .m-body { padding:14px 14px 16px }
