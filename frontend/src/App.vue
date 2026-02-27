@@ -479,7 +479,7 @@ onUnmounted(() => { if (clkTimer) clearInterval(clkTimer) })
 .app-card:not(.sort-mode):hover .app-icon-wrap { transform: translateY(-6px) scale(1.07); box-shadow: 0 16px 36px rgba(0,0,0,.32), 0 1px 0 rgba(255,255,255,.2) inset; }
 .app-icon-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .app-icon-txt { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--grad); font-weight: 800; color: white; text-shadow: 0 1px 4px rgba(0,0,0,.25); }
-.app-name { font-size: 12px; color: rgba(255,255,255,.96); text-align: center; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,.4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-name { font-size: 12px; color: rgba(255,255,255,.96); text-align: center; font-weight: 600; text-shadow: 0 1px 4px rgba(0,0,0,.4); overflow: hidden; text-overflow: ellipsis; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; line-height: 1.35; min-height: 1.35em; }
 .app-card.sort-mode { animation: wiggle .4s ease infinite alternate; }
 .app-card.sort-mode .app-icon-wrap { border: 2.5px dashed rgba(255,255,255,.65); transform: none !important; box-shadow: none !important; }
 .app-card.drag-over .app-icon-wrap { border-color: white; background: rgba(255,255,255,.12); }
