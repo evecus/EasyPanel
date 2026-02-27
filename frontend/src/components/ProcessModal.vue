@@ -6,7 +6,7 @@
           <div class="head-ico">⚙️</div>
           <span class="m-title">进程管理</span>
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div class="m-head-right">
           <input class="m-search" v-model="search" placeholder="🔍 搜索进程..." />
           <button class="m-close" @click="close">✕</button>
         </div>
@@ -154,6 +154,7 @@ defineExpose({ open, close })
 .m-overlay { position:fixed;inset:0;z-index:900;background:rgba(15,10,40,.55);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:16px }
 .m-box { background:#fff;border-radius:22px;width:960px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 40px 100px rgba(99,102,241,.2) }
 .m-head { display:flex;align-items:center;justify-content:space-between;padding:20px 28px;border-bottom:2px solid #f0f4ff }
+.m-head-right { display:flex;gap:8px;align-items:center }
 .head-ico { font-size:20px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(99,102,241,.1);border-radius:12px }
 .m-title { font-size:20px;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text }
 .m-search { padding:8px 14px;border:1.5px solid #ede8f5;border-radius:10px;font-size:14px;outline:none;background:#faf8ff;font-family:inherit;width:200px }
@@ -205,7 +206,12 @@ defineExpose({ open, close })
 .pm-rss { font-size:12px;color:#6b7280;font-family:monospace;text-align:right;margin-top:2px }
 
 @media(max-width:700px) {
-  .m-head { padding:16px 18px }
+  .m-head { padding:10px 12px;flex-wrap:nowrap;gap:6px }
+  .m-head-right { flex-wrap:nowrap;gap:5px;flex:1;min-width:0 }
+  .head-ico { width:28px;height:28px;font-size:15px;border-radius:8px;flex-shrink:0 }
+  .m-title { font-size:13px;white-space:nowrap }
+  .m-search { width:0;flex:1;min-width:0;padding:6px 10px;font-size:12px }
+  .m-close { width:28px;height:28px;font-size:12px;border-radius:8px;flex-shrink:0 }
   .m-toolbar { padding:8px 12px;gap:6px;flex-wrap:nowrap }
   .m-toolbar > div { gap:4px }
   .tbtn { padding:5px 9px;font-size:11px;border-radius:7px;gap:3px }
