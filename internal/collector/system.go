@@ -134,11 +134,10 @@ func GetSystemInfo() SystemInfo {
 	if physCores > 0 {
 		si.CPUCores = int32(physCores)
 	} else if len(cpuInfos) > 0 {
-		// 兜底：遍历所有条目，统计唯一 (physicalId, coreId) 组合
-		type coreKey struct{ phys, core int32 }
-		seen := map[coreKey]struct{}{}
+		// 兜底：遍历所有条目，统计唯一 "physicalId:coreId" 组合
+		seen := map[string]struct{}{}
 		for _, c := range cpuInfos {
-			seen[coreKey{c.PhysicalID, c.CoreID}] = struct{}{}
+			seen[c.PhysicalID+":"+c.CoreID] = struct{}{}
 		}
 		if len(seen) > 0 {
 			si.CPUCores = int32(len(seen))
