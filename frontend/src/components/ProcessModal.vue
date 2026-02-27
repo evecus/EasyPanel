@@ -205,8 +205,8 @@ defineExpose({ open, close })
 .pm-rss { font-size:12px;color:#6b7280;font-family:monospace;text-align:right;margin-top:2px }
 
 @media(max-width:700px) {
-  .m-overlay { padding:0;align-items:flex-end }
-  .m-box { width:100%;max-width:100%;border-radius:22px 22px 0 0;max-height:92vh }
+  .m-overlay { padding:12px }
+  .m-box { width:100%;max-width:100%;border-radius:20px;max-height:calc(100vh - 120px);height:calc(100vh - 120px) }
   .m-head { padding:16px 18px }
   .m-toolbar { padding:12px 16px }
   .desktop-body { display:none }
