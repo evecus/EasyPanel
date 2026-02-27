@@ -64,10 +64,11 @@ chmod +x easypanel-linux-amd64
 ```bash
 docker run -d \
   --name easypanel \
+  --user root
   --restart unless-stopped \
   -p 3088:3088 \
-  -v /your/path/data:/app/easypanel/data \
-  -v /your/path/config:/app/easypanel/config \
+  -v /your/path/data:/app/data \
+  -v /your/path/config:/app/config \
   evecus/easypanel:latest
 ```
 
@@ -75,8 +76,8 @@ docker run -d \
 
 | 容器路径 | 说明 |
 |---------|------|
-| `/app/easypanel/data` | 应用数据、设置、上传的图片 |
-| `/app/easypanel/config` | 账号配置、JWT 密钥、端口设置 |
+| `/app/data` | 应用数据、设置、上传的图片 |
+| `/app/config` | 账号配置、JWT 密钥、端口设置 |
 
 > ⚠️ 不挂载目录时数据会在容器删除后丢失
 
@@ -88,11 +89,12 @@ services:
     image: evecus/easypanel:latest
     container_name: easypanel
     restart: unless-stopped
+    user: root
     ports:
       - "3088:3088"
     volumes:
-      - ./data:/app/easypanel/data
-      - ./config:/app/easypanel/config
+      - ./data:/app/data
+      - ./config:/app/config
 ```
 
 ```bash
