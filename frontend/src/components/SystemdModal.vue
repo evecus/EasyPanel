@@ -6,7 +6,7 @@
           <div class="head-ico">🔧</div>
           <span class="m-title">Systemd 管理</span>
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <input class="m-search" v-model="search" placeholder="🔍 搜索服务..." />
           <select class="m-sel" v-model="filterState">
             <option value="">全部状态</option>
@@ -18,24 +18,26 @@
         </div>
       </div>
 
-      <!-- 工具栏：排序 + 刷新 -->
+      <!-- 工具栏 -->
       <div class="m-toolbar">
-        <div style="display:flex;gap:6px;align-items:center">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
           <span style="font-size:12px;color:#94a3b8;font-weight:600">排序</span>
           <button class="tbtn" :class="{active:sortBy===''}" @click="setSort('')">默认</button>
           <button class="tbtn" :class="{active:sortBy==='memory'}" @click="setSort('memory')">内存</button>
           <button class="tbtn" :class="{active:sortBy==='cpu'}" @click="setSort('cpu')">CPU</button>
-          <button v-if="sortBy" class="tbtn dir-btn" @click="toggleDir" :title="sortDir==='desc'?'从大到小':'从小到大'">
+          <button v-if="sortBy" class="tbtn dir-btn" @click="toggleDir">
             <span :style="sortDir==='asc'?'transform:scaleY(-1);display:inline-block':''">▼</span>
             {{ sortDir==='desc'?'降序':'升序' }}
           </button>
         </div>
-        <button class="tbtn" @click="load(true)">🔄 刷新</button>
-        <span style="margin-left:auto;font-size:13px;color:#94a3b8;font-weight:600">{{ filtered.length }} 个服务</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="tbtn" @click="load(true)">🔄 刷新</button>
+          <span class="svc-count">{{ filtered.length }} 个服务</span>
+        </div>
       </div>
 
-      <!-- 表格 -->
-      <div class="m-body">
+      <!-- 桌面端：表格 -->
+      <div class="m-body desktop-body">
         <div v-if="loading" class="empty">
           <div style="font-size:36px">⚙️</div>
           <div style="color:#94a3b8;margin-top:10px;font-size:14px">加载中...</div>
@@ -83,6 +85,57 @@
               </tr>
             </tbody>
           </table>
+          <div v-if="filtered.length===0&&!loading" class="empty">
+            <div style="font-size:36px">🔧</div>
+            <div style="color:#94a3b8;margin-top:10px;font-size:14px">{{ errorMsg || '未发现服务' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 移动端：卡片列表 -->
+      <div class="m-body mobile-body">
+        <div v-if="loading" class="empty">
+          <div style="font-size:36px">⚙️</div>
+          <div style="color:#94a3b8;margin-top:10px;font-size:14px">加载中...</div>
+        </div>
+        <div v-else class="svc-cards">
+          <div v-for="svc in filtered" :key="svc.unit" class="scard" @click="showDetail(svc)">
+            <!-- 服务名 + 状态 -->
+            <div class="scard-head">
+              <div class="scard-name-wrap">
+                <div class="svc-name">{{ svc.unit }}</div>
+                <div class="svc-desc">{{ svc.description }}</div>
+              </div>
+              <span class="stag" :class="stateTag(svc.active)">{{ svc.active }}</span>
+            </div>
+            <!-- 信息行 -->
+            <div class="scard-info">
+              <span v-if="svc.sub" class="scard-sub">({{ svc.sub }})</span>
+              <span v-if="svc.memory" class="mem-lbl">💾 {{ svc.memory }}</span>
+              <span v-if="svc.unit_file_state" class="stag sm" :class="fileTag(svc.unit_file_state)">{{ svc.unit_file_state }}</span>
+            </div>
+            <!-- 操作按钮 -->
+            <div class="scard-acts" @click.stop>
+              <button class="sabtn cyan"  v-if="svc.active!=='active'" @click="action(svc,'start')" title="启动">
+                <span>▶</span><span class="sabtn-lbl">启动</span>
+              </button>
+              <button class="sabtn ghost" v-if="svc.active==='active'" @click="action(svc,'stop')" title="停止">
+                <span>⏹</span><span class="sabtn-lbl">停止</span>
+              </button>
+              <button class="sabtn ghost" @click="action(svc,'restart')" title="重启">
+                <span>↺</span><span class="sabtn-lbl">重启</span>
+              </button>
+              <button class="sabtn green" v-if="svc.unit_file_state!=='enabled'" @click="action(svc,'enable')" title="开机启动">
+                <span>✓</span><span class="sabtn-lbl">自启</span>
+              </button>
+              <button class="sabtn red" v-if="svc.unit_file_state==='enabled'" @click="action(svc,'disable')" title="禁用启动">
+                <span>✗</span><span class="sabtn-lbl">禁用</span>
+              </button>
+              <button class="sabtn ghost" @click="showLogs(svc)" title="查看日志">
+                <span>📋</span><span class="sabtn-lbl">日志</span>
+              </button>
+            </div>
+          </div>
           <div v-if="filtered.length===0&&!loading" class="empty">
             <div style="font-size:36px">🔧</div>
             <div style="color:#94a3b8;margin-top:10px;font-size:14px">{{ errorMsg || '未发现服务' }}</div>
@@ -203,7 +256,8 @@ defineExpose({ open, close })
 .m-sel { padding:8px 10px;border:1.5px solid #ede8f5;border-radius:10px;font-size:13px;background:#faf8ff;outline:none;font-family:inherit;color:#374151 }
 .m-close { border:none;background:#f0f4ff;border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:15px;color:#64748b;font-weight:700 }
 .m-close:hover { background:#e0e7ff }
-.m-toolbar { display:flex;align-items:center;gap:10px;padding:14px 28px;border-bottom:1px solid #f0f4ff;background:#fdfcff;flex-wrap:wrap }
+.m-toolbar { display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 28px;border-bottom:1px solid #f0f4ff;background:#fdfcff;flex-wrap:wrap }
+.svc-count { font-size:13px;color:#94a3b8;font-weight:600 }
 .m-body { flex:1;overflow-y:auto;overflow-x:hidden;min-height:0 }
 .tbtn { padding:7px 14px;border:1.5px solid #ede8f5;border-radius:9px;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#6b7280;transition:all .15s;display:inline-flex;align-items:center;gap:5px }
 .tbtn:hover { border-color:var(--h1);color:var(--h1);background:#faf5ff }
@@ -235,7 +289,6 @@ defineExpose({ open, close })
 .abtn.red   { background:#fee2e2;color:#dc2626 } .abtn.red:hover   { background:#fecaca }
 .dir-btn { gap:5px }
 .empty { text-align:center;padding:60px 20px }
-/* 子 modal */
 .sub-modal { background:#fff;border-radius:20px;padding:28px;max-width:96vw;max-height:88vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.2) }
 .sub-head { display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px }
 .detail-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px }
@@ -244,4 +297,31 @@ defineExpose({ open, close })
 .dv { font-size:14px;color:#1e1b4b;font-weight:600 }
 .mono { font-family:monospace }
 .log-pre { background:#0f172a;color:#e2e8f0;border-radius:12px;padding:18px;font-size:13px;font-family:monospace;overflow:auto;max-height:60vh;white-space:pre-wrap;word-break:break-all;margin-top:14px }
+
+/* 移动端卡片（默认隐藏） */
+.mobile-body { display:none }
+.svc-cards { display:flex;flex-direction:column;gap:10px;padding:14px }
+.scard { background:#fff;border:1.5px solid rgba(99,102,241,.1);border-radius:16px;padding:14px 16px;box-shadow:0 2px 10px rgba(99,102,241,.06);cursor:pointer }
+.scard:active { background:#faf8ff }
+.scard-head { display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px }
+.scard-name-wrap { flex:1;min-width:0 }
+.scard-info { display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;margin-top:4px }
+.scard-sub { font-size:12px;color:#94a3b8 }
+.scard-acts { display:flex;gap:6px;flex-wrap:wrap }
+.sabtn { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:none;border-radius:12px;padding:8px 12px;min-width:52px;cursor:pointer;font-size:16px;font-weight:700;transition:all .15s }
+.sabtn-lbl { font-size:10px;font-weight:600;line-height:1 }
+.sabtn.cyan  { background:#e0f7fa;color:#0891b2 } .sabtn.cyan:hover  { background:#b2ebf2 }
+.sabtn.ghost { background:#f5f3ff;color:#6366f1 } .sabtn.ghost:hover { background:#ede9fe }
+.sabtn.green { background:#d1fae5;color:#059669 } .sabtn.green:hover { background:#a7f3d0 }
+.sabtn.red   { background:#fee2e2;color:#dc2626 } .sabtn.red:hover   { background:#fecaca }
+
+@media(max-width:700px) {
+  .m-overlay { padding:0;align-items:flex-end }
+  .m-box { width:100%;max-width:100%;border-radius:22px 22px 0 0;max-height:92vh }
+  .m-head { padding:14px 16px }
+  .m-toolbar { padding:12px 16px }
+  .desktop-body { display:none }
+  .mobile-body { display:flex;flex:1;overflow-y:auto;min-height:0 }
+  .mobile-body > .svc-cards { flex:1 }
+}
 </style>
