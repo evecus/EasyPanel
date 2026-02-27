@@ -171,6 +171,8 @@
     @features-changed="onFeaturesChanged"
     :show-app-name="showAppName"
     @show-app-name-changed="v => showAppName = v"
+    :desktop-disp="desktopDisp"
+    :mobile-disp="mobileDisp"
     :disp-set="dispSet"
     :font-set="fontSet"
     :clk-cfg="clkCfg"
@@ -228,6 +230,8 @@ const featureProcess = ref(false)
 const featureSystemd = ref(false)
 const featureDocker  = ref(false)
 const showAppName    = ref(true)
+const desktopDisp    = ref(null)  // 桌面端完整样式数据
+const mobileDisp     = ref(null)  // 移动端完整样式数据
 const clkCfg    = reactive({ show_time: true, show_date: true, show_weekday: true, show_lunar: false, show_seconds: false, show_year: false })
 const clockHtml = ref('')
 const dispSet   = reactive({ hostnameSize: 76, clockSize: 24, iconSize: 64, appNameSize: 14, iconRadius: 25, iconGap: 22, sidePadding: 52 })
@@ -302,6 +306,8 @@ async function loadPanel() {
     featureSystemd.value = info.feature_systemd || false
     featureDocker.value  = info.feature_docker  || false
     showAppName.value    = info.show_app_name !== false // 默认true
+    desktopDisp.value    = info.desktop || null
+    mobileDisp.value     = info.mobile  || null
     if (info.clock) Object.assign(clkCfg, info.clock)
     const sl = info.language || localStorage.getItem('ep_lang') || 'zh'
     lang.value = sl; localStorage.setItem('ep_lang', sl)
