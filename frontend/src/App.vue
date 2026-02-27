@@ -494,11 +494,8 @@ onUnmounted(() => { if (clkTimer) clearInterval(clkTimer) })
 .app-card.sort-mode .app-icon-wrap { border: 2.5px dashed rgba(255,255,255,.65); transform: none !important; box-shadow: none !important; }
 .app-card.drag-over .app-icon-wrap { border-color: white; background: rgba(255,255,255,.12); }
 @media(max-width:700px){
-  .dash-header { padding: 14px 18px 0 !important; }
   .hero { padding: 22px 16px 30px; }
-  .apps-outer { padding: 0 0 28px !important; }
-  .apps-inner { padding: 0 18px !important; }
-  .apps-grid { gap: 14px !important; justify-content: center; }
+  .apps-grid { justify-content: center; }
   .icon-btn { right: 18px; }
 }
 </style>
