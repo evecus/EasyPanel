@@ -317,7 +317,10 @@ defineExpose({ open, close })
 
 @media(max-width:700px) {
   .m-head { padding:14px 16px }
-  .m-toolbar { padding:12px 16px }
+  .m-toolbar { padding:8px 12px;gap:6px;flex-wrap:nowrap }
+  .m-toolbar > div { gap:4px }
+  .tbtn { padding:5px 9px;font-size:11px;border-radius:7px;gap:3px }
+  .svc-count { font-size:11px }
   .desktop-body { display:none }
   .mobile-body { display:flex;flex:1;overflow-y:auto;min-height:0 }
   .mobile-body > .svc-cards { flex:1 }
