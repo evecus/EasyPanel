@@ -197,7 +197,7 @@ function parsedPorts(portsStr) {
 }
 function isClickablePort(p) { return /^[0-9.]+:\d+->/.test(p) || /^\[::]:/.test(p) }
 function openPort(p) {
-  const m=p.match(/^[0-9.]+:(\\d+)->/)
+  const m=p.match(/^[0-9.]+:(\d+)->/);
   if(m) window.open(`http://${window.location.hostname}:${m[1]}`,'_blank')
 }
 
@@ -267,9 +267,9 @@ defineExpose({ open, close })
 .m-body { padding:22px 28px;overflow-y:auto;flex:1 }
 
 /* 容器卡片 */
-.cg { display:flex;flex-wrap:wrap;gap:16px;align-content:flex-start }
+.cg { display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;align-content:flex-start }
 .row-break { flex-basis:100%;height:0;margin:0 }
-.ccard { flex:0 0 300px;background:#fff;border:1.5px solid rgba(99,102,241,.1);border-radius:18px;padding:18px;box-shadow:0 2px 14px rgba(99,102,241,.07);transition:transform .2s,box-shadow .2s }
+.ccard { background:#fff;border:1.5px solid rgba(99,102,241,.1);border-radius:18px;padding:18px;box-shadow:0 2px 14px rgba(99,102,241,.07);transition:transform .2s,box-shadow .2s }
 .ccard:hover { transform:translateY(-3px);box-shadow:0 8px 28px rgba(99,102,241,.14) }
 .cc-head { display:flex;align-items:center;gap:8px;margin-bottom:9px }
 .cc-dot { width:11px;height:11px;border-radius:50%;flex-shrink:0 }
@@ -322,15 +322,13 @@ defineExpose({ open, close })
 
 /* 移动端：全屏底部弹出，卡片全宽单列 */
 @media(max-width:700px) {
-  .m-overlay { padding:0;align-items:flex-end }
-  .m-box { width:100%;max-width:100%;border-radius:22px 22px 0 0;max-height:92vh }
+  .m-overlay { padding:12px }
+  .m-box { width:100%;max-width:100%;border-radius:20px;max-height:calc(100vh - 120px);height:calc(100vh - 120px) }
   .m-head { padding:16px 18px }
   .m-search { display:none }
-  .m-body { padding:14px 14px 24px }
-  .cg { gap:12px }
-  .ccard { flex:0 0 100% }
+  .m-body { padding:14px 14px 16px }
+  .cg { grid-template-columns:1fr;gap:12px }
   .abtn { width:42px;height:42px;font-size:17px;border-radius:12px }
   .cc-actions { gap:8px }
 }
-@media(min-width:701px) and (max-width:900px) { .ccard{flex:0 0 calc(50% - 8px)} }
 </style>
