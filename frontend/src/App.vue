@@ -64,7 +64,7 @@
                   </svg>
                 </div>
               </div>
-              <div class="app-name" :style="appNameStyle">{{ t('lblSysInfo') }}</div>
+              <div v-show="showAppName" class="app-name" :style="appNameStyle">{{ t('lblSysInfo') }}</div>
             </div>
             <!-- 进程管理：心跳波形 -->
             <div v-if="featureProcess" class="app-card" :style="{ width: (dispSet.iconSize + 14) + 'px' }" @click="requireAuth(() => processModal?.open())">
@@ -80,7 +80,7 @@
                   </svg>
                 </div>
               </div>
-              <div class="app-name" :style="appNameStyle">{{ t('lblProcess') }}</div>
+              <div v-show="showAppName" class="app-name" :style="appNameStyle">{{ t('lblProcess') }}</div>
             </div>
             <!-- Systemd：电源符号 -->
             <div v-if="featureSystemd" class="app-card" :style="{ width: (dispSet.iconSize + 14) + 'px' }" @click="requireAuth(() => systemdModal?.open())">
@@ -95,7 +95,7 @@
                   </svg>
                 </div>
               </div>
-              <div class="app-name" :style="appNameStyle">{{ t('lblSystemd') }}</div>
+              <div v-show="showAppName" class="app-name" :style="appNameStyle">{{ t('lblSystemd') }}</div>
             </div>
             <!-- Docker：鲸鱼 -->
             <div v-if="featureDocker" class="app-card" :style="{ width: (dispSet.iconSize + 14) + 'px' }" @click="requireAuth(() => dockerModal?.open())">
@@ -118,7 +118,7 @@
                   </svg>
                 </div>
               </div>
-              <div class="app-name" :style="appNameStyle">{{ t('lblDocker') }}</div>
+              <div v-show="showAppName" class="app-name" :style="appNameStyle">{{ t('lblDocker') }}</div>
             </div>
           </template>
             <div
@@ -145,7 +145,7 @@
                   {{ (app.icon_text && app.icon_text.trim()) ? app.icon_text.trim() : (app.title || '?').substring(0, 2) }}
                 </div>
               </div>
-              <div class="app-name" :style="appNameStyle">{{ app.title }}</div>
+              <div v-show="showAppName" class="app-name" :style="appNameStyle">{{ app.title }}</div>
             </div>
           </div>
         </div>
@@ -169,6 +169,8 @@
     :feature-systemd="featureSystemd"
     :feature-docker="featureDocker"
     @features-changed="onFeaturesChanged"
+    :show-app-name="showAppName"
+    @show-app-name-changed="v => showAppName = v"
     :disp-set="dispSet"
     :font-set="fontSet"
     :clk-cfg="clkCfg"
@@ -225,6 +227,7 @@ const featureSysInfo = ref(false)
 const featureProcess = ref(false)
 const featureSystemd = ref(false)
 const featureDocker  = ref(false)
+const showAppName    = ref(true)
 const clkCfg    = reactive({ show_time: true, show_date: true, show_weekday: true, show_lunar: false, show_seconds: false, show_year: false })
 const clockHtml = ref('')
 const dispSet   = reactive({ hostnameSize: 76, clockSize: 24, iconSize: 64, appNameSize: 14, iconRadius: 25, iconGap: 22, sidePadding: 52 })
@@ -298,6 +301,7 @@ async function loadPanel() {
     featureProcess.value = info.feature_process || false
     featureSystemd.value = info.feature_systemd || false
     featureDocker.value  = info.feature_docker  || false
+    showAppName.value    = info.show_app_name !== false // 默认true
     if (info.clock) Object.assign(clkCfg, info.clock)
     const sl = info.language || localStorage.getItem('ep_lang') || 'zh'
     lang.value = sl; localStorage.setItem('ep_lang', sl)
