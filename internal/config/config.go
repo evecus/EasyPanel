@@ -74,6 +74,7 @@ type PanelSettings struct {
 	FontAppname  string       `json:"font_appname"`
 	FontUI       string       `json:"font_ui"`
 	NetworkMode  string       `json:"network_mode"` // "lan" or "wan"
+	ShowAppName     bool `json:"show_app_name"`
 	FeatureSysInfo  bool `json:"feature_sysinfo"`
 	FeatureProcess  bool `json:"feature_process"`
 	FeatureSystemd  bool `json:"feature_systemd"`
@@ -199,6 +200,7 @@ func loadSettings() error {
 			FontClock:    "system",
 			FontAppname:  "system",
 			FontUI:       "system",
+			ShowAppName:  true,
 			FeatureSysInfo: true,
 			Clock: ClockDisplay{
 				ShowTime: true, ShowDate: true, ShowWeekday: true,
