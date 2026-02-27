@@ -151,12 +151,15 @@
             <div class="s-title">{{ t('titleTheme') }}</div>
             <div class="s-card">
               <div class="theme-grid">
-                <div v-for="th in THEMES" :key="th.id" class="theme-item" :class="{ sel: curThemeId === th.id }" @click="applyThemeAndSave(th.id)">
+                <div v-for="th in THEMES" :key="th.id" class="theme-item"
+                  :class="{ sel: pendingThemeId === th.id, saved: curThemeId === th.id && pendingThemeId !== th.id }"
+                  @click="selectTheme(th.id)">
                   <div class="theme-dot" :style="{ background: th.dot }"></div>
                   <div class="theme-name">{{ th.name }}</div>
                 </div>
               </div>
             </div>
+            <button class="btn btn-p" style="margin-top:12px" @click="saveTheme">{{ t('saveBtn') }}</button>
           </div>
 
           <!-- ── 时钟 ── -->
@@ -363,6 +366,7 @@ const activeTab = ref('account')
 const users = ref([])
 const appVersion = ref('')
 const mobileDrawerOpen = ref(false)  // 移动端侧边抽屉
+const pendingThemeId = ref('')       // 主题色面板中临时选中但未保存的主题
 
 watch(activeTab, async (tab) => {
   if (tab === 'about' && !appVersion.value) {
@@ -497,6 +501,7 @@ async function open() {
   form.hostname = props.panelInfo?.hostname || ''
   form.logo = props.panelInfo?.logo || ''
   form.logoPreview = props.panelInfo?.logo || ''
+  pendingThemeId.value = curThemeId.value  // 打开时同步当前已保存主题
   form.wallpaper = props.panelInfo?.wallpaper || ''
   form.pubMode = props.pubModeValue || false
   form.netMode = props.netModeValue || 'lan'
@@ -573,6 +578,16 @@ async function saveFonts() {
   const sv = buildPayload()
   try { await apiCall('/api/settings', { method: 'PUT', body: JSON.stringify(sv) }); emit('panelUpdated'); emit('toast', t('tSaved')) }
   catch { emit('toast', t('tFailed')) }
+}
+function selectTheme(id) {
+  pendingThemeId.value = id
+  applyThemeCss(THEMES.find(x => x.id === id))  // 实时预览主题色
+}
+async function saveTheme() {
+  curThemeId.value = pendingThemeId.value
+  const sv = buildPayload()
+  try { await apiCall('/api/settings', { method: 'PUT', body: JSON.stringify(sv) }); emit('toast', t('tSaved')) }
+  catch { emit('toast', t('tFailed')); }
 }
 async function applyThemeAndSave(id) {
   curThemeId.value = id
@@ -683,7 +698,7 @@ defineExpose({ open, close })
 .s-nav-header { padding: 20px 18px 14px; display: flex; align-items: center; gap: 10px; }
 .s-nav-ico { width: 32px; height: 32px; background: var(--grad); border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px color-mix(in srgb,var(--h1) 35%,transparent); }
 .s-nav-t { font-size: 14px; font-weight: 800; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.s-nav-list { padding: 8px; flex: 1; }
+.s-nav-list { padding: 8px; flex: 1; display: flex; flex-direction: column; }
 .s-ni { display: flex; align-items: center; gap: 9px; padding: 10px 13px; border-radius: 11px; cursor: pointer; font-size: 13px; font-weight: 600; color: #6b7280; transition: all var(--tr); margin-bottom: 3px; }
 .s-ni:hover { background: rgba(168,85,247,.07); color: #1e1b2e; }
 .s-ni.active { background: var(--grad); color: white; box-shadow: 0 4px 14px color-mix(in srgb,var(--h1) 30%,transparent); }
@@ -693,6 +708,7 @@ defineExpose({ open, close })
 .theme-item { border-radius: 13px; padding: 12px 8px; cursor: pointer; transition: all var(--tr); background: white; border: 2px solid #ede8f5; text-align: center; }
 .theme-item:hover { transform: scale(1.04); border-color: var(--h1); }
 .theme-item.sel { border-color: var(--h1); box-shadow: 0 4px 14px color-mix(in srgb,var(--h1) 25%,transparent); }
+.theme-item.saved { border-style: dashed; border-color: var(--h1); opacity: 0.6; }
 .theme-dot { width: 36px; height: 36px; border-radius: 50%; margin: 0 auto 8px; box-shadow: 0 3px 10px rgba(0,0,0,.15); }
 .theme-name { font-size: 11px; font-weight: 600; color: #4b5563; }
 .u-table { width: 100%; border-collapse: collapse; }
