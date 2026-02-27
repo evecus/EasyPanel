@@ -235,5 +235,14 @@ defineExpose({ open, close })
 .tag-yellow { background:#fef3c7;color:#d97706 }
 .tag-red    { background:#fee2e2;color:#dc2626 }
 @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.5} }
-@media(max-width:780px) { .sys-banner,.cards-row { grid-template-columns:repeat(2,1fr) } .mid-row,.disk-grid { grid-template-columns:1fr } }
+@media(max-width:780px) {
+  .sys-banner,.cards-row { grid-template-columns:repeat(2,1fr) }
+  .mid-row,.disk-grid { grid-template-columns:1fr }
+}
+@media(max-width:700px) {
+  .m-overlay { padding:12px }
+  .m-box { width:100%;max-width:100%;border-radius:20px;max-height:calc(100vh - 120px);height:calc(100vh - 120px) }
+  .m-head { padding:16px 18px }
+  .m-body { padding:16px 18px }
+}
 </style>
