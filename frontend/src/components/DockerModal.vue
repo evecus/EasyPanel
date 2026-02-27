@@ -188,14 +188,14 @@ async function showLogs(c) {
 function parsedPorts(portsStr) {
   if (!portsStr) return []
   let s = portsStr
-  s = s.replace(/(\\/(?:tcp|udp|sctp))(\\[)/g,'$1,$2')
-  s = s.replace(/(\\/(?:tcp|udp|sctp))(\\d)/g,'$1,$2')
+  s = s.replace(/(\/(tcp|udp|sctp))(\[)/g,'$1,$3')
+  s = s.replace(/(\/(tcp|udp|sctp))(\d)/g,'$1,$3')
   const tokens = s.split(/[,\\s]+/).map(t=>t.trim()).filter(Boolean)
   const seen=new Set(), result=[]
   for (const tok of tokens) { if(tok&&!seen.has(tok)){seen.add(tok);result.push(tok)} }
   return result
 }
-function isClickablePort(p) { return /(?:^[0-9.]+:|^\\[::]:)\\d+->/.test(p) }
+function isClickablePort(p) { return /^[0-9.]+:\d+->/.test(p) || /^\[::]:/.test(p) }
 function openPort(p) {
   const m=p.match(/^[0-9.]+:(\\d+)->/)
   if(m) window.open(`http://${window.location.hostname}:${m[1]}`,'_blank')
