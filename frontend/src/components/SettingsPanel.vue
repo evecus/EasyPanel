@@ -10,8 +10,8 @@
 
         <!-- ── 移动端：滑入抽屉导航 ── -->
         <div class="mob-drawer" :class="{ open: mobileDrawerOpen }">
-          <div class="s-nav-header">
-            <div class="s-nav-ico">
+          <div class="mob-drawer-header">
+            <div class="mob-drawer-ico">
               <img v-if="form.logoPreview || form.logo" :src="form.logoPreview || form.logo" style="width:100%;height:100%;object-fit:cover;border-radius:9px;" />
               <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="3" y="6" width="18" height="2.5" rx="1.25" fill="white"/>
@@ -19,13 +19,13 @@
                 <rect x="3" y="16" width="15.5" height="2.5" rx="1.25" fill="white" fill-opacity="0.5"/>
               </svg>
             </div>
-            <span class="s-nav-t">{{ t('sysSettings') }}</span>
+            <span class="mob-drawer-title">{{ t('sysSettings') }}</span>
           </div>
-          <div class="s-nav-list">
-            <div v-for="tab in TABS" :key="tab.id" class="s-ni" :class="{ active: activeTab === tab.id }"
+          <div class="mob-nav-list">
+            <div v-for="tab in TABS" :key="tab.id" class="mob-ni" :class="{ active: activeTab === tab.id }"
               @click="activeTab = tab.id; mobileDrawerOpen = false">
-              <span class="s-ico">{{ tab.icon }}</span>
-              <span>{{ t(tab.labelKey) }}</span>
+              <span class="mob-ni-ico">{{ tab.icon }}</span>
+              <span class="mob-ni-lbl">{{ t(tab.labelKey) }}</span>
             </div>
           </div>
         </div>
@@ -64,7 +64,7 @@
 
           <!-- ── 我的信息 ── -->
           <div v-if="activeTab === 'account'">
-            <div class="s-title mob-hide-title">{{ t('titleAccount') }}</div>
+            <div class="s-title" v-show="!isMobile">{{ t('titleAccount') }}</div>
             <div class="s-card">
               <div class="s-row"><label class="s-lbl">{{ t('lblUsername') }}</label><input class="s-inp" :value="user?.username || ''" disabled /></div>
               <div class="s-row"><label class="s-lbl">{{ t('lblNickname') }}</label><input class="s-inp" v-model="form.nick" :placeholder="t('nickPlaceholder')" /></div>
@@ -81,7 +81,7 @@
 
           <!-- ── 显示 ── -->
           <div v-if="activeTab === 'display'">
-            <div class="s-title mob-hide-title">{{ t('titleDisplay') }}</div>
+            <div class="s-title" v-show="!isMobile">{{ t('titleDisplay') }}</div>
 
             <!-- 主机名 & LOGO -->
             <div class="s-card">
@@ -148,7 +148,7 @@
 
           <!-- ── 主题色 ── -->
           <div v-if="activeTab === 'theme'">
-            <div class="s-title mob-hide-title">{{ t('titleTheme') }}</div>
+            <div class="s-title" v-show="!isMobile">{{ t('titleTheme') }}</div>
             <div class="s-card">
               <div class="theme-grid">
                 <div v-for="th in THEMES" :key="th.id" class="theme-item"
@@ -164,7 +164,7 @@
 
           <!-- ── 时钟 ── -->
           <div v-if="activeTab === 'clock'">
-            <div class="s-title mob-hide-title">{{ t('titleClock') }}</div>
+            <div class="s-title" v-show="!isMobile">{{ t('titleClock') }}</div>
             <div class="s-card">
               <div class="t-row" v-for="ck in clockToggles" :key="ck.key">
                 <div><div class="t-lbl">{{ t(ck.label) }}</div><div v-if="ck.sub" class="t-sub">{{ t(ck.sub) }}</div></div>
@@ -175,7 +175,7 @@
 
           <!-- ── 壁纸 ── -->
           <div v-if="activeTab === 'wallpaper'">
-            <div class="s-title mob-hide-title">{{ t('titleWallpaper') }}</div>
+            <div class="s-title" v-show="!isMobile">{{ t('titleWallpaper') }}</div>
             <div class="wp-grid">
               <div v-for="url in WPS" :key="url" class="wp-thumb" :class="{ sel: form.wallpaper === url }" @click="selectWp(url)">
                 <img :src="url" loading="lazy" />
@@ -194,7 +194,7 @@
 
           <!-- ── 账号管理 ── -->
           <div v-if="activeTab === 'users'">
-            <div class="s-title mob-hide-title">{{ t('titleUsers') }}</div>
+            <div class="s-title" v-show="!isMobile">{{ t('titleUsers') }}</div>
             <div class="info-box">{{ t('infoAccounts') }}</div>
             <div class="s-card" style="overflow-x:auto;padding:0">
               <table class="u-table">
@@ -221,7 +221,7 @@
 
           <!-- ── 数据管理 ── -->
           <div v-if="activeTab === 'backup'">
-            <div class="s-title mob-hide-title">{{ t('titleBackup') }}</div>
+            <div class="s-title" v-show="!isMobile">{{ t('titleBackup') }}</div>
             <div class="info-box" v-html="t('infoBackup').replace('\n','<br>')"></div>
             <div class="s-card">
               <div class="backup-btns">
@@ -257,7 +257,7 @@
 
           <!-- ── 基本设置 ── -->
           <div v-if="activeTab === 'basic'">
-            <div class="s-title mob-hide-title">⚙️ {{ t('niBasic') }}</div>
+            <div class="s-title" v-show="!isMobile">⚙️ {{ t('niBasic') }}</div>
 
             <!-- 语言 -->
             <div class="s-card">
@@ -366,6 +366,12 @@ const activeTab = ref('account')
 const users = ref([])
 const appVersion = ref('')
 const mobileDrawerOpen = ref(false)  // 移动端侧边抽屉
+const isMobile = ref(window.innerWidth <= 700)
+if (typeof window !== 'undefined') {
+  const mq = window.matchMedia('(max-width:700px)')
+  isMobile.value = mq.matches
+  mq.addEventListener('change', e => { isMobile.value = e.matches })
+}
 const pendingThemeId = ref('')       // 主题色面板中临时选中但未保存的主题
 
 watch(activeTab, async (tab) => {
@@ -818,10 +824,49 @@ defineExpose({ open, close })
     transition: transform .25s cubic-bezier(.4,0,.2,1);
   }
   .mob-drawer.open { transform: translateY(0); }
-  .mob-drawer .s-nav-list { padding: 8px 12px 24px; }
-  .mob-drawer .s-ni { font-size: 14px; padding: 13px 16px; margin-bottom: 4px; border-radius: 13px; }
-  .mob-drawer .s-ico { font-size: 18px; width: 26px; }
-  .mob-drawer .s-nav-header { padding: 18px 16px 12px; border-bottom: 1px solid #ede8f5; margin-bottom: 4px; }
-  /* 移动端隐藏内容区顶部重复标题 */
-  :global(.mob-hide-title) { display: none; }
+  /* 抽屉内部专属样式 */
+  .mob-drawer-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid #ede8f5;
+    flex-shrink: 0;
+  }
+  .mob-drawer-ico {
+    width: 32px; height: 32px;
+    background: var(--grad); border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .mob-drawer-title {
+    font-size: 15px; font-weight: 800;
+    background: var(--grad);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .mob-nav-list {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 12px 24px;
+    gap: 2px;
+  }
+  .mob-ni {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+    transition: all .15s;
+    width: 100%;
+  }
+  .mob-ni:hover { background: rgba(168,85,247,.07); color: #1e1b2e; }
+  .mob-ni.active { background: var(--grad); color: white; }
+  .mob-ni-ico { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+  .mob-ni-lbl { flex: 1; }
 }</style>
