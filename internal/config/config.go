@@ -55,6 +55,21 @@ type ClockDisplay struct {
 	ShowYear    bool `json:"show_year"`
 }
 
+// DisplayConfig 保存一套显示样式（桌面端或移动端）
+type DisplayConfig struct {
+	HostnameSize int    `json:"hostname_size"`
+	ClockSize    int    `json:"clock_size"`
+	IconSize     int    `json:"icon_size"`
+	AppNameSize  int    `json:"app_name_size"`
+	IconRadius   int    `json:"icon_radius"`
+	IconGap      int    `json:"icon_gap"`
+	SidePadding  int    `json:"side_padding"`
+	FontHostname string `json:"font_hostname"`
+	FontClock    string `json:"font_clock"`
+	FontAppname  string `json:"font_appname"`
+	FontUI       string `json:"font_ui"`
+}
+
 type PanelSettings struct {
 	Hostname     string       `json:"hostname"`
 	Logo         string       `json:"logo"`
@@ -62,6 +77,7 @@ type PanelSettings struct {
 	Clock        ClockDisplay `json:"clock"`
 	Theme        string       `json:"theme"`
 	Language     string       `json:"language"`
+	// 旧版顶层字段保留（兼容未迁移数据），新版以 Desktop/Mobile 为准
 	HostnameSize int          `json:"hostname_size"`
 	ClockSize    int          `json:"clock_size"`
 	IconSize     int          `json:"icon_size"`
@@ -73,6 +89,9 @@ type PanelSettings struct {
 	FontClock    string       `json:"font_clock"`
 	FontAppname  string       `json:"font_appname"`
 	FontUI       string       `json:"font_ui"`
+	// 桌面端 / 移动端独立样式（0 表示未设置，回退到顶层旧字段）
+	Desktop      *DisplayConfig `json:"desktop,omitempty"`
+	Mobile       *DisplayConfig `json:"mobile,omitempty"`
 	NetworkMode  string       `json:"network_mode"` // "lan" or "wan"
 	ShowAppName     bool `json:"show_app_name"`
 	FeatureSysInfo  bool `json:"feature_sysinfo"`
@@ -201,6 +220,16 @@ func loadSettings() error {
 			FontAppname:  "system",
 			FontUI:       "system",
 			ShowAppName:  true,
+			Desktop: &DisplayConfig{
+				HostnameSize: 70, ClockSize: 24, IconSize: 64, AppNameSize: 14,
+				IconRadius: 25, IconGap: 22, SidePadding: 52,
+				FontHostname: "system", FontClock: "system", FontAppname: "system", FontUI: "system",
+			},
+			Mobile: &DisplayConfig{
+				HostnameSize: 48, ClockSize: 18, IconSize: 54, AppNameSize: 12,
+				IconRadius: 25, IconGap: 16, SidePadding: 20,
+				FontHostname: "system", FontClock: "system", FontAppname: "system", FontUI: "system",
+			},
 			FeatureSysInfo: true,
 			Clock: ClockDisplay{
 				ShowTime: true, ShowDate: true, ShowWeekday: true,
