@@ -123,6 +123,7 @@ func GetPanelInfo(c *gin.Context) {
 		"feature_process":  s.FeatureProcess,
 		"feature_systemd":  s.FeatureSystemd,
 		"feature_docker":   s.FeatureDocker,
+		"show_app_name":    s.ShowAppName,
 	})
 }
 
