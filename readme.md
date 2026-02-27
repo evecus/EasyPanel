@@ -64,11 +64,29 @@ chmod +x easypanel-linux-amd64
 ```bash
 docker run -d \
   --name easypanel \
-  --user root
   --restart unless-stopped \
   -p 3088:3088 \
-  -v /your/path/data:/app/data \
-  -v /your/path/config:/app/config \
+  -v /root/data:/app/data \
+  -v /root/config:/app/config \
+  \
+  # ── 读取宿主机系统信息 ──
+  -v /proc:/host/proc:ro \
+  -v /sys:/host/sys:ro \
+  -e HOST_PROC=/host/proc \
+  -e HOST_SYS=/host/sys \
+  \
+  # ── 进程管理（读取宿主机进程） ──
+  --pid=host \
+  \
+  # ── 网络信息（读取宿主机网卡） ──
+  --network=host \
+  \
+  # ── Docker 管理（操作宿主机 Docker） ──
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  \
+  # ── 温度传感器 ──
+  -v /sys/class/thermal:/sys/class/thermal:ro \
+  \
   evecus/easypanel:latest
 ```
 
@@ -89,12 +107,24 @@ services:
     image: evecus/easypanel:latest
     container_name: easypanel
     restart: unless-stopped
-    user: root
-    ports:
-      - "3088:3088"
+    # 注意：使用 network_mode: host 时，-p 端口映射会被忽略
+    # 但为了清晰起见，可以在这里标注该应用监听 3088 端口
+    network_mode: host
+    pid: host
+    environment:
+      - HOST_PROC=/host/proc
+      - HOST_SYS=/host/sys
     volumes:
-      - ./data:/app/data
-      - ./config:/app/config
+      # 持久化数据与配置
+      - /root/data:/app/data
+      - /root/config:/app/config
+      # 系统信息采集
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      # Docker 守护进程管理
+      - /var/run/docker.sock:/var/run/docker.sock
+      # 温度传感器
+      - /sys/class/thermal:/sys/class/thermal:ro
 ```
 
 ```bash
