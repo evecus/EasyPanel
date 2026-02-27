@@ -69,36 +69,78 @@ func Logout(c *gin.Context) {
 
 // ── PANEL INFO (public) ───────────────────────────────────────────
 
+// isMobile 根据 User-Agent 判断是否移动端
+func isMobile(c *gin.Context) bool {
+	ua := strings.ToLower(c.Request.Header.Get("User-Agent"))
+	for _, kw := range []string{"android", "iphone", "ipod", "windows phone", "mobile"} {
+		if strings.Contains(ua, kw) {
+			return true
+		}
+	}
+	return false
+}
+
+// resolveDisplay 从 settings 中取出当前设备对应的样式，并做零值兜底
+func resolveDisplay(s *config.PanelSettings, mobile bool) (hostnameSize, clockSize, iconSize, appNameSize, iconRadius, iconGap, sidePadding int, fontHostname, fontClock, fontAppname, fontUI string) {
+	// 选择对应套配置
+	var d *config.DisplayConfig
+	if mobile {
+		d = s.Mobile
+	} else {
+		d = s.Desktop
+	}
+
+	// 如果该套未设置，回退到顶层字段（兼容旧数据）
+	if d == nil {
+		d = &config.DisplayConfig{
+			HostnameSize: s.HostnameSize, ClockSize: s.ClockSize,
+			IconSize: s.IconSize, AppNameSize: s.AppNameSize,
+			IconRadius: s.IconRadius, IconGap: s.IconGap, SidePadding: s.SidePadding,
+			FontHostname: s.FontHostname, FontClock: s.FontClock,
+			FontAppname: s.FontAppname, FontUI: s.FontUI,
+		}
+	}
+
+	hostnameSize = d.HostnameSize; if hostnameSize == 0 { hostnameSize = 56 }
+	clockSize    = d.ClockSize;    if clockSize == 0    { clockSize = 16 }
+	iconSize     = d.IconSize;     if iconSize == 0     { iconSize = 78 }
+	appNameSize  = d.AppNameSize;  if appNameSize == 0  { appNameSize = 12 }
+	iconRadius   = d.IconRadius;   if iconRadius == 0   { iconRadius = 26 }
+	iconGap      = d.IconGap;      if iconGap == 0      { iconGap = 22 }
+	sidePadding  = d.SidePadding;  if sidePadding == 0  { sidePadding = 52 }
+	fontHostname = d.FontHostname; if fontHostname == "" { fontHostname = "system" }
+	fontClock    = d.FontClock;    if fontClock == ""    { fontClock = "system" }
+	fontAppname  = d.FontAppname;  if fontAppname == ""  { fontAppname = "system" }
+	fontUI       = d.FontUI;       if fontUI == ""       { fontUI = "system" }
+	return
+}
+
 func GetPanelInfo(c *gin.Context) {
 	s := config.Settings
-	hostnameSize := s.HostnameSize
-	if hostnameSize == 0 {
-		hostnameSize = 56
+	mobile := isMobile(c)
+	hostnameSize, clockSize, iconSize, appNameSize, iconRadius, iconGap, sidePadding,
+		fontHostname, fontClock, fontAppname, fontUI := resolveDisplay(s, mobile)
+
+	// 同时把两套完整数据也一并下发，前端设置页需要用
+	desktop := s.Desktop
+	mobileDisp := s.Mobile
+	if desktop == nil {
+		desktop = &config.DisplayConfig{
+			HostnameSize: s.HostnameSize, ClockSize: s.ClockSize, IconSize: s.IconSize,
+			AppNameSize: s.AppNameSize, IconRadius: s.IconRadius, IconGap: s.IconGap,
+			SidePadding: s.SidePadding, FontHostname: s.FontHostname, FontClock: s.FontClock,
+			FontAppname: s.FontAppname, FontUI: s.FontUI,
+		}
 	}
-	clockSize := s.ClockSize
-	if clockSize == 0 {
-		clockSize = 16
+	if mobileDisp == nil {
+		mobileDisp = &config.DisplayConfig{
+			HostnameSize: s.HostnameSize, ClockSize: s.ClockSize, IconSize: s.IconSize,
+			AppNameSize: s.AppNameSize, IconRadius: s.IconRadius, IconGap: s.IconGap,
+			SidePadding: s.SidePadding, FontHostname: s.FontHostname, FontClock: s.FontClock,
+			FontAppname: s.FontAppname, FontUI: s.FontUI,
+		}
 	}
-	iconSize := s.IconSize
-	if iconSize == 0 {
-		iconSize = 78
-	}
-	appNameSize := s.AppNameSize
-	if appNameSize == 0 {
-		appNameSize = 12
-	}
-	iconRadius := s.IconRadius
-	if iconRadius == 0 {
-		iconRadius = 26
-	}
-	iconGap := s.IconGap
-	if iconGap == 0 {
-		iconGap = 22
-	}
-	sidePadding := s.SidePadding
-	if sidePadding == 0 {
-		sidePadding = 52
-	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"hostname":      s.Hostname,
 		"logo":          s.Logo,
@@ -106,6 +148,7 @@ func GetPanelInfo(c *gin.Context) {
 		"clock":         s.Clock,
 		"theme":         s.Theme,
 		"language":      s.Language,
+		// 当前设备生效的样式（主页直接用）
 		"hostname_size": hostnameSize,
 		"clock_size":    clockSize,
 		"icon_size":     iconSize,
@@ -113,10 +156,14 @@ func GetPanelInfo(c *gin.Context) {
 		"icon_radius":   iconRadius,
 		"icon_gap":      iconGap,
 		"side_padding":  sidePadding,
-		"font_hostname": s.FontHostname,
-		"font_clock":    s.FontClock,
-		"font_appname":  s.FontAppname,
-		"font_ui":       s.FontUI,
+		"font_hostname": fontHostname,
+		"font_clock":    fontClock,
+		"font_appname":  fontAppname,
+		"font_ui":       fontUI,
+		// 两套完整数据（设置面板用）
+		"desktop":       desktop,
+		"mobile":        mobileDisp,
+		"is_mobile":     mobile,
 		"public_mode":   config.Main.PublicMode,
 		"network_mode":     s.NetworkMode,
 		"feature_sysinfo":  s.FeatureSysInfo,
