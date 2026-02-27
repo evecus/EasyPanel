@@ -68,12 +68,25 @@
 
             <!-- 样式（尺寸 + 图标） -->
             <div class="s-card-title" style="margin:20px 0 10px;">样式</div>
+
+            <!-- 设备切换 Tab -->
+            <div class="device-tab-bar">
+              <button class="device-tab" :class="{ active: form.dispDevice === 'desktop' }" @click="form.dispDevice = 'desktop'">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:-2px"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                {{ t('deviceDesktop') }}
+              </button>
+              <button class="device-tab" :class="{ active: form.dispDevice === 'mobile' }" @click="form.dispDevice = 'mobile'">
+                <svg width="12" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px;vertical-align:-2px"><rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="18" r="1" fill="currentColor"/></svg>
+                {{ t('deviceMobile') }}
+              </button>
+            </div>
+
             <div class="s-card">
               <div class="s-row" v-for="sl in [...sizeSliders, ...iconSliders]" :key="sl.key">
                 <label class="s-lbl">{{ t(sl.label) }}</label>
                 <div class="s-slider-row">
-                  <input type="range" class="s-slider" v-model="form.display[sl.key]" :min="sl.min" :max="sl.max" />
-                  <span class="s-slider-val">{{ form.display[sl.key] }}{{ sl.unit }}</span>
+                  <input type="range" class="s-slider" v-model="curDispSet[sl.key]" :min="sl.min" :max="sl.max" />
+                  <span class="s-slider-val">{{ curDispSet[sl.key] }}{{ sl.unit }}</span>
                 </div>
               </div>
               <!-- 图标名称显示开关 -->
@@ -92,11 +105,11 @@
             <div class="s-card">
               <div class="s-row" v-for="f in fontFields" :key="f.key">
                 <label class="s-lbl">{{ t(f.label) }}</label>
-                <select class="s-sel" v-model="form.fonts[f.key]">
+                <select class="s-sel" v-model="curDispSet[fontFieldMap[f.key]]">
                   <option v-for="opt in FONT_OPTIONS" :key="opt.v" :value="opt.v">{{ opt.l }}</option>
                 </select>
               </div>
-              <button class="btn btn-p" @click="saveFonts" style="margin-top:4px">{{ t('saveFonts') }}</button>
+              <button class="btn btn-p" @click="saveDisplay" style="margin-top:4px">{{ t('saveFonts') }}</button>
             </div>
           </div>
 
@@ -284,14 +297,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, nextTick } from 'vue'
+import { ref, reactive, watch, nextTick, computed } from 'vue'
 import { useI18n, lang } from '../composables/useI18n.js'
 import { apiCall } from '../composables/useApi.js'
 import { THEMES, WPS, FONT_OPTIONS, curThemeId, applyThemeCss } from '../composables/useTheme.js'
 import { resolveFont } from '../composables/useTheme.js'
 
 const { t } = useI18n()
-const emit = defineEmits(['toast', 'logout', 'panelUpdated', 'clearData', 'netModeChanged', 'featuresChanged'])
+const emit = defineEmits(['toast', 'logout', 'panelUpdated', 'clearData', 'netModeChanged', 'featuresChanged', 'showAppNameChanged'])
 
 const props = defineProps({
   user: Object,
@@ -307,6 +320,9 @@ const props = defineProps({
   fontSet: Object,
   clkCfg: Object,
   apps: Array,
+  // 两套完整样式数据（来自 /api/panel）
+  desktopDisp: Object,
+  mobileDisp:  Object,
 })
 
 const visible = ref(false)
@@ -337,7 +353,23 @@ const form = reactive({
   display: { hostnameSize: 56, clockSize: 16, iconSize: 78, appNameSize: 12, iconRadius: 26, iconGap: 22, sidePadding: 52 },
   fonts: { hostname: 'system', clock: 'system', appname: 'system', ui: 'system' },
   clock: { show_time: true, show_date: true, show_weekday: true, show_lunar: false, show_seconds: false, show_year: false },
+  // 桌面端/移动端独立样式
+  dispDevice: 'desktop', // 当前正在编辑哪套: 'desktop' | 'mobile'
+  desktop: { hostnameSize: 70, clockSize: 24, iconSize: 64, appNameSize: 14, iconRadius: 25, iconGap: 22, sidePadding: 52,
+             fontHostname: 'system', fontClock: 'system', fontAppname: 'system', fontUI: 'system' },
+  mobile:  { hostnameSize: 48, clockSize: 18, iconSize: 54, appNameSize: 12, iconRadius: 25, iconGap: 16, sidePadding: 20,
+             fontHostname: 'system', fontClock: 'system', fontAppname: 'system', fontUI: 'system' },
 })
+
+// 当前正在编辑的那套样式（desktop 或 mobile）
+const curDispSet = computed(() => form.dispDevice === 'mobile' ? form.mobile : form.desktop)
+// 当前正在编辑的字体套（从 curDispSet 读写，独立于 form.fonts）
+const curFontSet = computed(() => ({
+  hostname: curDispSet.value.fontHostname,
+  clock:    curDispSet.value.fontClock,
+  appname:  curDispSet.value.fontAppname,
+  ui:       curDispSet.value.fontUI,
+}))
 
 const TABS = [
   { id: 'account',   icon: '👤', labelKey: 'niAccount' },
@@ -368,6 +400,13 @@ const fontFields = [
   { key: 'appname',  label: 'fontAppname' },
   { key: 'ui',       label: 'fontUi' },
 ]
+// 字体字段在 desktop/mobile 对象里的 key 名映射
+const fontFieldMap = {
+  hostname: 'fontHostname',
+  clock:    'fontClock',
+  appname:  'fontAppname',
+  ui:       'fontUI',
+}
 const clockToggles = [
   { key: 'show_time',    label: 'ckTime' },
   { key: 'show_seconds', label: 'ckSec' },
@@ -378,21 +417,37 @@ const clockToggles = [
 ]
 
 function buildPayload() {
+  const d = form.desktop
+  const m = form.mobile
   return {
     hostname: form.hostname, logo: form.logo, wallpaper: form.wallpaper,
     clock: { ...form.clock }, theme: curThemeId.value, language: lang.value,
-    hostname_size: +form.display.hostnameSize, clock_size: +form.display.clockSize,
-    icon_size: +form.display.iconSize, app_name_size: +form.display.appNameSize,
-    icon_radius: +form.display.iconRadius, icon_gap: +form.display.iconGap,
-    side_padding: +form.display.sidePadding,
+    // 旧版顶层字段（兼容性，取桌面端值）
+    hostname_size: +d.hostnameSize, clock_size: +d.clockSize,
+    icon_size: +d.iconSize, app_name_size: +d.appNameSize,
+    icon_radius: +d.iconRadius, icon_gap: +d.iconGap,
+    side_padding: +d.sidePadding,
+    font_hostname: d.fontHostname, font_clock: d.fontClock,
+    font_appname: d.fontAppname, font_ui: d.fontUI,
+    // 双套独立样式
+    desktop: {
+      hostname_size: +d.hostnameSize, clock_size: +d.clockSize,
+      icon_size: +d.iconSize, app_name_size: +d.appNameSize,
+      icon_radius: +d.iconRadius, icon_gap: +d.iconGap, side_padding: +d.sidePadding,
+      font_hostname: d.fontHostname, font_clock: d.fontClock, font_appname: d.fontAppname, font_ui: d.fontUI,
+    },
+    mobile: {
+      hostname_size: +m.hostnameSize, clock_size: +m.clockSize,
+      icon_size: +m.iconSize, app_name_size: +m.appNameSize,
+      icon_radius: +m.iconRadius, icon_gap: +m.iconGap, side_padding: +m.sidePadding,
+      font_hostname: m.fontHostname, font_clock: m.fontClock, font_appname: m.fontAppname, font_ui: m.fontUI,
+    },
     network_mode: form.netMode,
     feature_sysinfo: form.featureSysinfo,
     feature_process: form.featureProcess,
     feature_systemd: form.featureSystemd,
     feature_docker:  form.featureDocker,
     show_app_name:   form.showAppName,
-    font_hostname: form.fonts.hostname, font_clock: form.fonts.clock,
-    font_appname: form.fonts.appname, font_ui: form.fonts.ui,
   }
 }
 
@@ -410,8 +465,35 @@ async function open() {
   form.featureSystemd = props.featureSystemd || false
   form.featureDocker  = props.featureDocker  || false
   form.showAppName    = props.showAppName !== false
-  Object.assign(form.display, props.dispSet)
-  Object.assign(form.fonts, props.fontSet)
+  // 初始化双套样式
+  const dd = props.desktopDisp || props.dispSet || {}
+  const mm = props.mobileDisp  || {}
+  Object.assign(form.desktop, {
+    hostnameSize: dd.hostname_size || dd.hostnameSize || 70,
+    clockSize:    dd.clock_size    || dd.clockSize    || 24,
+    iconSize:     dd.icon_size     || dd.iconSize     || 64,
+    appNameSize:  dd.app_name_size || dd.appNameSize  || 14,
+    iconRadius:   dd.icon_radius   || dd.iconRadius   || 25,
+    iconGap:      dd.icon_gap      || dd.iconGap      || 22,
+    sidePadding:  dd.side_padding  || dd.sidePadding  || 52,
+    fontHostname: dd.font_hostname || dd.fontHostname || 'system',
+    fontClock:    dd.font_clock    || dd.fontClock    || 'system',
+    fontAppname:  dd.font_appname  || dd.fontAppname  || 'system',
+    fontUI:       dd.font_ui       || dd.fontUI       || 'system',
+  })
+  Object.assign(form.mobile, {
+    hostnameSize: mm.hostname_size || mm.hostnameSize || 48,
+    clockSize:    mm.clock_size    || mm.clockSize    || 18,
+    iconSize:     mm.icon_size     || mm.iconSize     || 54,
+    appNameSize:  mm.app_name_size || mm.appNameSize  || 12,
+    iconRadius:   mm.icon_radius   || mm.iconRadius   || 25,
+    iconGap:      mm.icon_gap      || mm.iconGap      || 16,
+    sidePadding:  mm.side_padding  || mm.sidePadding  || 20,
+    fontHostname: mm.font_hostname || mm.fontHostname || 'system',
+    fontClock:    mm.font_clock    || mm.fontClock    || 'system',
+    fontAppname:  mm.font_appname  || mm.fontAppname  || 'system',
+    fontUI:       mm.font_ui       || mm.fontUI       || 'system',
+  })
   Object.assign(form.clock, props.clkCfg)
   form.nuName = ''; form.nuPwd = ''; form.nuNick = ''
   // 用 setTimeout 延迟到当前点击事件完全结束后再显示 backdrop，避免立即被关闭
@@ -602,4 +684,9 @@ defineExpose({ open, close })
 .about-desc { font-size: 13px; color: #94a3b8; margin-top: 2px; }
 .about-link { margin-top: 18px; font-size: 13px; font-weight: 700; color: var(--h1); text-decoration: none; padding: 8px 22px; border: 1.5px solid var(--h1); border-radius: 10px; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
 .about-link:hover { background: var(--h1); color: white; }
+/* 设备切换 tab */
+.device-tab-bar { display: flex; gap: 0; margin-bottom: 10px; border-radius: 12px; overflow: hidden; background: #f0f0f8; border: 1.5px solid #e8e0f5; }
+.device-tab { flex: 1; padding: 8px 0; font-size: 13px; font-weight: 600; border: none; background: transparent; cursor: pointer; color: #94a3b8; transition: all .18s; display: flex; align-items: center; justify-content: center; }
+.device-tab.active { background: var(--grad); color: white; border-radius: 10px; box-shadow: 0 2px 8px color-mix(in srgb,var(--h1) 30%,transparent); }
+.device-tab:not(.active):hover { background: rgba(168,85,247,.08); color: var(--h1); }
 </style>
