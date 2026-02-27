@@ -64,7 +64,7 @@
 
           <!-- ── 我的信息 ── -->
           <div v-if="activeTab === 'account'">
-            <div class="s-title">{{ t('titleAccount') }}</div>
+            <div class="s-title mob-hide-title">{{ t('titleAccount') }}</div>
             <div class="s-card">
               <div class="s-row"><label class="s-lbl">{{ t('lblUsername') }}</label><input class="s-inp" :value="user?.username || ''" disabled /></div>
               <div class="s-row"><label class="s-lbl">{{ t('lblNickname') }}</label><input class="s-inp" v-model="form.nick" :placeholder="t('nickPlaceholder')" /></div>
@@ -81,7 +81,7 @@
 
           <!-- ── 显示 ── -->
           <div v-if="activeTab === 'display'">
-            <div class="s-title">{{ t('titleDisplay') }}</div>
+            <div class="s-title mob-hide-title">{{ t('titleDisplay') }}</div>
 
             <!-- 主机名 & LOGO -->
             <div class="s-card">
@@ -148,7 +148,7 @@
 
           <!-- ── 主题色 ── -->
           <div v-if="activeTab === 'theme'">
-            <div class="s-title">{{ t('titleTheme') }}</div>
+            <div class="s-title mob-hide-title">{{ t('titleTheme') }}</div>
             <div class="s-card">
               <div class="theme-grid">
                 <div v-for="th in THEMES" :key="th.id" class="theme-item"
@@ -164,7 +164,7 @@
 
           <!-- ── 时钟 ── -->
           <div v-if="activeTab === 'clock'">
-            <div class="s-title">{{ t('titleClock') }}</div>
+            <div class="s-title mob-hide-title">{{ t('titleClock') }}</div>
             <div class="s-card">
               <div class="t-row" v-for="ck in clockToggles" :key="ck.key">
                 <div><div class="t-lbl">{{ t(ck.label) }}</div><div v-if="ck.sub" class="t-sub">{{ t(ck.sub) }}</div></div>
@@ -175,7 +175,7 @@
 
           <!-- ── 壁纸 ── -->
           <div v-if="activeTab === 'wallpaper'">
-            <div class="s-title">{{ t('titleWallpaper') }}</div>
+            <div class="s-title mob-hide-title">{{ t('titleWallpaper') }}</div>
             <div class="wp-grid">
               <div v-for="url in WPS" :key="url" class="wp-thumb" :class="{ sel: form.wallpaper === url }" @click="selectWp(url)">
                 <img :src="url" loading="lazy" />
@@ -194,7 +194,7 @@
 
           <!-- ── 账号管理 ── -->
           <div v-if="activeTab === 'users'">
-            <div class="s-title">{{ t('titleUsers') }}</div>
+            <div class="s-title mob-hide-title">{{ t('titleUsers') }}</div>
             <div class="info-box">{{ t('infoAccounts') }}</div>
             <div class="s-card" style="overflow-x:auto;padding:0">
               <table class="u-table">
@@ -221,7 +221,7 @@
 
           <!-- ── 数据管理 ── -->
           <div v-if="activeTab === 'backup'">
-            <div class="s-title">{{ t('titleBackup') }}</div>
+            <div class="s-title mob-hide-title">{{ t('titleBackup') }}</div>
             <div class="info-box" v-html="t('infoBackup').replace('\n','<br>')"></div>
             <div class="s-card">
               <div class="backup-btns">
@@ -257,7 +257,7 @@
 
           <!-- ── 基本设置 ── -->
           <div v-if="activeTab === 'basic'">
-            <div class="s-title">⚙️ {{ t('niBasic') }}</div>
+            <div class="s-title mob-hide-title">⚙️ {{ t('niBasic') }}</div>
 
             <!-- 语言 -->
             <div class="s-card">
@@ -809,16 +809,19 @@ defineExpose({ open, close })
     display: flex;
     flex-direction: column;
     position: absolute;
-    top: 0; left: 0; bottom: 0;
-    width: 220px;
+    top: 0; left: 0; right: 0; bottom: 0;
     background: linear-gradient(180deg, #faf5ff 0%, #fdf2f8 100%);
-    border-right: 1px solid #ede8f5;
     z-index: 20;
-    border-radius: 20px 0 0 0;
+    border-radius: 20px 20px 0 0;
     overflow-y: auto;
-    transform: translateX(-100%);
+    transform: translateY(-100%);
     transition: transform .25s cubic-bezier(.4,0,.2,1);
-    box-shadow: 4px 0 24px rgba(168,85,247,.12);
   }
-  .mob-drawer.open { transform: translateX(0); }
+  .mob-drawer.open { transform: translateY(0); }
+  .mob-drawer .s-nav-list { padding: 8px 12px 24px; }
+  .mob-drawer .s-ni { font-size: 14px; padding: 13px 16px; margin-bottom: 4px; border-radius: 13px; }
+  .mob-drawer .s-ico { font-size: 18px; width: 26px; }
+  .mob-drawer .s-nav-header { padding: 18px 16px 12px; border-bottom: 1px solid #ede8f5; margin-bottom: 4px; }
+  /* 移动端隐藏内容区顶部重复标题 */
+  :global(.mob-hide-title) { display: none; }
 }</style>
