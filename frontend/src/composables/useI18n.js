@@ -67,6 +67,7 @@ const STRINGS = {
     featureProcess:'进程管理',featureProcessSub:'查看并管理系统进程',
     featureSystemd:'Systemd 服务',featureSystemdSub:'管理 Systemd 服务单元',
     featureDocker:'Docker 容器',featureDockerSub:'查看并管理 Docker 容器',
+    lblShowAppName:'显示图标名称',lblShowAppNameSub:'开启后在主页显示每个应用图标下方的名称',
   },
   en: {
     loginSub:'Please sign in to continue',loginBtn:'Sign In',loginErr:'Invalid username or password',
@@ -134,6 +135,7 @@ const STRINGS = {
     featureProcess:'Process Manager',featureProcessSub:'View and manage system processes',
     featureSystemd:'Systemd Services',featureSystemdSub:'Manage Systemd service units',
     featureDocker:'Docker Containers',featureDockerSub:'View and manage Docker containers',
+    lblShowAppName:'Show App Names',lblShowAppNameSub:'Display the name below each app icon on the home screen',
   }
 }
 
