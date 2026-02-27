@@ -14,10 +14,10 @@
       </div>
 
       <div class="m-body">
-        <div v-if="filtered.length" class="cg">
-          <template v-for="(c,idx) in filtered" :key="c.id">
-            <div v-if="idx>0&&filtered[idx-1].state!==c.state" class="row-break"></div>
-            <div class="ccard">
+        <div v-if="filtered.length" class="cg-wrap">
+          <!-- running / paused 组 -->
+          <div v-if="filteredRunning.length" class="cg">
+            <div v-for="c in filteredRunning" :key="c.id" class="ccard">
               <div class="cc-head">
                 <div class="cc-dot" :class="c.state==='running'?'run':c.state==='paused'?'pause':'stop'"></div>
                 <div class="cc-name" :title="c.name">{{ c.name }}</div>
@@ -57,7 +57,50 @@
                 <button class="abtn ghost" @click="showLogs(c)" title="查看日志">📋</button>
               </div>
             </div>
-          </template>
+          </div>
+          <!-- stopped 组 -->
+          <div v-if="filteredStopped.length" class="cg">
+            <div v-for="c in filteredStopped" :key="c.id" class="ccard">
+              <div class="cc-head">
+                <div class="cc-dot" :class="c.state==='running'?'run':c.state==='paused'?'pause':'stop'"></div>
+                <div class="cc-name" :title="c.name">{{ c.name }}</div>
+                <span class="stag" :class="stateTag(c.state)">{{ c.state }}</span>
+              </div>
+              <div class="cc-img">🐳 {{ c.image }}</div>
+              <!-- 端口 -->
+              <div class="cc-ports-wrap">
+                <div class="cc-port-row" v-for="(port,pi) in parsedPorts(c.ports).slice(0,2)" :key="pi">
+                  <span class="port-tag" :class="isClickablePort(port)?'clickable':''"
+                    @click="openPort(port)" :title="isClickablePort(port)?`打开 ${port}`:port">{{ port }}</span>
+                </div>
+                <div v-if="parsedPorts(c.ports).length===0" class="cc-port-row" style="height:22px"></div>
+                <div v-if="parsedPorts(c.ports).length<=1" class="cc-port-row" style="height:22px"></div>
+              </div>
+              <!-- CPU/MEM -->
+              <div class="cc-metrics" v-if="c.state==='running'">
+                <div class="cm">
+                  <span class="cm-lbl">CPU</span>
+                  <div class="mini-bar"><div class="mini-fill" :style="`width:${c.cpu_percent||0}%;background:#6366f1`"></div></div>
+                  <span class="cm-val" style="color:#6366f1">{{ c.cpu_percent?.toFixed(1) }}%</span>
+                </div>
+                <div class="cm">
+                  <span class="cm-lbl">MEM</span>
+                  <div class="mini-bar"><div class="mini-fill" :style="`width:${c.mem_percent||0}%;background:#06b6d4`"></div></div>
+                  <span class="cm-val" style="color:#06b6d4">{{ c.mem_percent?.toFixed(1) }}%</span>
+                </div>
+              </div>
+              <div v-else class="cc-metrics-placeholder"></div>
+              <!-- 操作 -->
+              <div class="cc-actions">
+                <button class="abtn cyan"  v-if="c.state!=='running'" @click="action(c,'start')" title="启动">▶</button>
+                <button class="abtn ghost" v-if="c.state==='running'" @click="action(c,'stop')" title="停止">⏹</button>
+                <button class="abtn ghost" @click="action(c,'restart')" title="重启">↺</button>
+                <button class="abtn purple" @click="showInspect(c)" title="容器参数">⚙️</button>
+                <button class="abtn ghost" @click="pullUpdate(c)" :disabled="updating===c.id" :title="updating===c.id?'更新中...':'一键更新镜像'">{{ updating===c.id?'⏳':'⬆️' }}</button>
+                <button class="abtn ghost" @click="showLogs(c)" title="查看日志">📋</button>
+              </div>
+            </div>
+          </div>
         </div>
         <div v-else class="empty">
           <div style="font-size:48px">🐳</div>
@@ -158,7 +201,7 @@ const updating = ref(null)
 const updateLog = ref(null)
 
 const filtered = computed(() => {
-  const stateOrder = s => s==='running'?0:s==='exited'?1:2
+  const stateOrder = s => s==='running'?0:s==='paused'?1:s==='exited'?2:3
   return containers.value
     .filter(c =>
       c.name?.toLowerCase().includes(search.value.toLowerCase()) ||
@@ -166,6 +209,8 @@ const filtered = computed(() => {
     )
     .sort((a,b) => stateOrder(a.state)-stateOrder(b.state))
 })
+const filteredRunning = computed(() => filtered.value.filter(c => c.state==='running' || c.state==='paused'))
+const filteredStopped = computed(() => filtered.value.filter(c => c.state!=='running' && c.state!=='paused'))
 
 function stateTag(s) { return s==='running'?'green':s==='paused'?'yellow':'gray' }
 
@@ -267,8 +312,9 @@ defineExpose({ open, close })
 .m-body { padding:22px 28px;overflow-y:auto;flex:1 }
 
 /* 容器卡片 */
-.cg { display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;align-content:flex-start }
-.row-break { flex-basis:100%;height:0;margin:0 }
+.cg-wrap { display:flex;flex-direction:column;gap:8px }
+.cg-wrap { display:flex;flex-direction:column;gap:8px }
+.cg { display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px }
 .ccard { background:#fff;border:1.5px solid rgba(99,102,241,.1);border-radius:18px;padding:18px;box-shadow:0 2px 14px rgba(99,102,241,.07);transition:transform .2s,box-shadow .2s }
 .ccard:hover { transform:translateY(-3px);box-shadow:0 8px 28px rgba(99,102,241,.14) }
 .cc-head { display:flex;align-items:center;gap:8px;margin-bottom:9px }
