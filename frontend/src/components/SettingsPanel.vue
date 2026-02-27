@@ -399,9 +399,9 @@ const form = reactive({
   clock: { show_time: true, show_date: true, show_weekday: true, show_lunar: false, show_seconds: false, show_year: false },
   // 桌面端/移动端独立样式
   dispDevice: 'desktop', // 当前正在编辑哪套: 'desktop' | 'mobile'
-  desktop: { hostnameSize: 70, clockSize: 24, iconSize: 64, appNameSize: 14, iconRadius: 25, iconGap: 22, sidePadding: 52,
+  desktop: { hostnameSize: 72, clockSize: 24, iconSize: 64, appNameSize: 14, iconRadius: 25, iconGap: 22, sidePadding: 49,
              fontHostname: 'system', fontClock: 'system', fontAppname: 'system', fontUI: 'system' },
-  mobile:  { hostnameSize: 48, clockSize: 18, iconSize: 54, appNameSize: 12, iconRadius: 25, iconGap: 16, sidePadding: 20,
+  mobile:  { hostnameSize: 47, clockSize: 17, iconSize: 53, appNameSize: 11, iconRadius: 25, iconGap: 13, sidePadding: 17,
              fontHostname: 'system', fontClock: 'system', fontAppname: 'system', fontUI: 'system' },
 })
 
@@ -430,18 +430,18 @@ const TABS = [
 const sizeSliders = computed(() => {
   const mob = form.dispDevice === 'mobile'
   return [
-    { key: 'hostnameSize', label: 'lblHostnameSize', min: mob ? 36 : 56, max: mob ? 74 : 96, unit: 'px' },
-    { key: 'clockSize',    label: 'lblClockSize',    min: 10, max: 38,  unit: 'px' },
-    { key: 'iconSize',     label: 'lblIconSize',     min: 44, max: 84,  unit: 'px' },
-    { key: 'appNameSize',  label: 'lblAppnameSize',  min: 6,  max: 22,  unit: 'px' },
+    { key: 'hostnameSize', label: 'lblHostnameSize', min: mob ? 36 : 56, max: mob ? 58 : 96, unit: 'px' },
+    { key: 'clockSize',    label: 'lblClockSize',    min: 10, max: mob ? 24 : 38, unit: 'px' },
+    { key: 'iconSize',     label: 'lblIconSize',     min: 44, max: mob ? 62 : 84, unit: 'px' },
+    { key: 'appNameSize',  label: 'lblAppnameSize',  min: 6,  max: mob ? 16 : 22, unit: 'px' },
   ]
 })
 const iconSliders = computed(() => {
   const mob = form.dispDevice === 'mobile'
   return [
     { key: 'iconRadius',  label: 'iconRadius',  min: 0,  max: 50,                unit: '%'  },
-    { key: 'iconGap',     label: 'iconGap',     min: 4,  max: mob ? 28 : 36,    unit: 'px' },
-    { key: 'sidePadding', label: 'sidePadding', min: mob ? 8 : 32, max: mob ? 48 : 72, unit: 'px' },
+    { key: 'iconGap',     label: 'iconGap',     min: 4,  max: mob ? 22 : 36,    unit: 'px' },
+    { key: 'sidePadding', label: 'sidePadding', min: mob ? 8 : 32, max: mob ? 26 : 72, unit: 'px' },
   ]
 })
 const fontFields = [
@@ -520,26 +520,26 @@ async function open() {
   const dd = props.desktopDisp || props.dispSet || {}
   const mm = props.mobileDisp  || {}
   Object.assign(form.desktop, {
-    hostnameSize: dd.hostname_size || dd.hostnameSize || 70,
+    hostnameSize: dd.hostname_size || dd.hostnameSize || 72,
     clockSize:    dd.clock_size    || dd.clockSize    || 24,
     iconSize:     dd.icon_size     || dd.iconSize     || 64,
     appNameSize:  dd.app_name_size || dd.appNameSize  || 14,
     iconRadius:   dd.icon_radius   || dd.iconRadius   || 25,
     iconGap:      dd.icon_gap      || dd.iconGap      || 22,
-    sidePadding:  dd.side_padding  || dd.sidePadding  || 52,
+    sidePadding:  dd.side_padding  || dd.sidePadding  || 49,
     fontHostname: dd.font_hostname || dd.fontHostname || 'system',
     fontClock:    dd.font_clock    || dd.fontClock    || 'system',
     fontAppname:  dd.font_appname  || dd.fontAppname  || 'system',
     fontUI:       dd.font_ui       || dd.fontUI       || 'system',
   })
   Object.assign(form.mobile, {
-    hostnameSize: mm.hostname_size || mm.hostnameSize || 48,
-    clockSize:    mm.clock_size    || mm.clockSize    || 18,
-    iconSize:     mm.icon_size     || mm.iconSize     || 54,
-    appNameSize:  mm.app_name_size || mm.appNameSize  || 12,
+    hostnameSize: mm.hostname_size || mm.hostnameSize || 47,
+    clockSize:    mm.clock_size    || mm.clockSize    || 17,
+    iconSize:     mm.icon_size     || mm.iconSize     || 53,
+    appNameSize:  mm.app_name_size || mm.appNameSize  || 11,
     iconRadius:   mm.icon_radius   || mm.iconRadius   || 25,
-    iconGap:      mm.icon_gap      || mm.iconGap      || 16,
-    sidePadding:  mm.side_padding  || mm.sidePadding  || 20,
+    iconGap:      mm.icon_gap      || mm.iconGap      || 13,
+    sidePadding:  mm.side_padding  || mm.sidePadding  || 17,
     fontHostname: mm.font_hostname || mm.fontHostname || 'system',
     fontClock:    mm.font_clock    || mm.fontClock    || 'system',
     fontAppname:  mm.font_appname  || mm.fontAppname  || 'system',
