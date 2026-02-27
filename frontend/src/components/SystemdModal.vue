@@ -316,8 +316,6 @@ defineExpose({ open, close })
 .sabtn.red   { background:#fee2e2;color:#dc2626 } .sabtn.red:hover   { background:#fecaca }
 
 @media(max-width:700px) {
-  .m-overlay { padding:0;align-items:center;justify-content:center }
-  .m-box { width:calc(100% - 24px);max-width:100%;border-radius:20px;height:calc(100vh - 160px);max-height:calc(100vh - 160px);overflow:hidden }
   .m-head { padding:14px 16px }
   .m-toolbar { padding:12px 16px }
   .desktop-body { display:none }
