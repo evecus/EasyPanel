@@ -5,7 +5,32 @@
       <div class="s-box" :style="{ fontFamily: resolveFont(form.fonts.ui) }">
         <button class="s-close-top" @click="close" title="关闭"></button>
 
-        <!-- Nav sidebar -->
+        <!-- ── 移动端：抽屉遮罩 ── -->
+        <div v-if="mobileDrawerOpen" class="mob-drawer-mask" @click="mobileDrawerOpen = false"></div>
+
+        <!-- ── 移动端：滑入抽屉导航 ── -->
+        <div class="mob-drawer" :class="{ open: mobileDrawerOpen }">
+          <div class="s-nav-header">
+            <div class="s-nav-ico">
+              <img v-if="form.logoPreview || form.logo" :src="form.logoPreview || form.logo" style="width:100%;height:100%;object-fit:cover;border-radius:9px;" />
+              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="6" width="18" height="2.5" rx="1.25" fill="white"/>
+                <rect x="3" y="11" width="13" height="2.5" rx="1.25" fill="white" fill-opacity="0.75"/>
+                <rect x="3" y="16" width="15.5" height="2.5" rx="1.25" fill="white" fill-opacity="0.5"/>
+              </svg>
+            </div>
+            <span class="s-nav-t">{{ t('sysSettings') }}</span>
+          </div>
+          <div class="s-nav-list">
+            <div v-for="tab in TABS" :key="tab.id" class="s-ni" :class="{ active: activeTab === tab.id }"
+              @click="activeTab = tab.id; mobileDrawerOpen = false">
+              <span class="s-ico">{{ tab.icon }}</span>
+              <span>{{ t(tab.labelKey) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── 桌面端：固定侧边导航 ── -->
         <div class="s-nav">
           <div class="s-nav-header">
             <div class="s-nav-ico">
@@ -28,6 +53,14 @@
 
         <!-- Content -->
         <div class="s-content">
+
+          <!-- ── 移动端顶部导航栏 ── -->
+          <div class="mob-topbar">
+            <button class="mob-hamburger" @click="mobileDrawerOpen = true">
+              <span></span><span></span><span></span>
+            </button>
+            <span class="mob-topbar-title">{{ t(TABS.find(t => t.id === activeTab)?.labelKey || 'sysSettings') }}</span>
+          </div>
 
           <!-- ── 我的信息 ── -->
           <div v-if="activeTab === 'account'">
@@ -329,6 +362,7 @@ const visible = ref(false)
 const activeTab = ref('account')
 const users = ref([])
 const appVersion = ref('')
+const mobileDrawerOpen = ref(false)  // 移动端侧边抽屉
 
 watch(activeTab, async (tab) => {
   if (tab === 'about' && !appVersion.value) {
@@ -695,4 +729,80 @@ defineExpose({ open, close })
 .device-tab { flex: 1; padding: 8px 0; font-size: 13px; font-weight: 600; border: none; background: transparent; cursor: pointer; color: #94a3b8; transition: all .18s; display: flex; align-items: center; justify-content: center; }
 .device-tab.active { background: var(--grad); color: white; border-radius: 10px; box-shadow: 0 2px 8px color-mix(in srgb,var(--h1) 30%,transparent); }
 .device-tab:not(.active):hover { background: rgba(168,85,247,.08); color: var(--h1); }
-</style>
+
+/* ── 移动端顶部导航栏（默认隐藏） ── */
+.mob-topbar { display: none; }
+.mob-drawer { display: none; }
+.mob-drawer-mask { display: none; }
+
+@media (max-width: 700px) {
+  /* 整体布局：全屏竖向 */
+  .s-panel { padding: 0; align-items: flex-end; }
+  .s-box { border-radius: 20px 20px 0 0; width: 100%; height: 94vh; flex-direction: column; }
+  .s-close-top { top: 10px; right: 12px; width: 26px; height: 26px; }
+
+  /* 桌面侧边栏隐藏 */
+  .s-nav { display: none; }
+
+  /* 移动端顶部栏 */
+  .mob-topbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid #ede8f5;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #faf5ff 0%, #fdf2f8 100%);
+    border-radius: 20px 20px 0 0;
+  }
+  .mob-hamburger {
+    width: 36px; height: 36px;
+    border: none; border-radius: 10px;
+    background: var(--grad);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 4px; cursor: pointer; flex-shrink: 0;
+    box-shadow: 0 3px 10px color-mix(in srgb,var(--h1) 30%,transparent);
+  }
+  .mob-hamburger span {
+    display: block; width: 16px; height: 2px;
+    background: white; border-radius: 2px;
+  }
+  .mob-topbar-title {
+    font-size: 15px; font-weight: 800;
+    background: var(--grad);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    flex: 1;
+  }
+
+  /* 内容区充满剩余空间 */
+  .s-content { flex: 1; padding: 18px 18px 32px; }
+
+  /* 抽屉遮罩 */
+  .mob-drawer-mask {
+    display: block;
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.25);
+    z-index: 10;
+    border-radius: 20px 20px 0 0;
+  }
+
+  /* 抽屉导航 */
+  .mob-drawer {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 220px;
+    background: linear-gradient(180deg, #faf5ff 0%, #fdf2f8 100%);
+    border-right: 1px solid #ede8f5;
+    z-index: 20;
+    border-radius: 20px 0 0 0;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform .25s cubic-bezier(.4,0,.2,1);
+    box-shadow: 4px 0 24px rgba(168,85,247,.12);
+  }
+  .mob-drawer.open { transform: translateX(0); }
+}</style>
