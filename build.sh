@@ -1,7 +1,5 @@
 #!/bin/bash
-# EasyPanel Build Script
-# Builds the Vue 3 frontend and compiles the Go binary
-
+# EasyPanel Rust Build Script
 set -e
 
 echo "📦 Installing frontend dependencies..."
@@ -11,10 +9,10 @@ npm install
 echo "🔨 Building Vue 3 frontend..."
 npm run build
 
-echo "🐹 Compiling Go backend..."
+echo "🦀 Compiling Rust backend (with embedded frontend)..."
 cd ..
-go build -o easypanel .
+cargo build --release
 
 echo ""
-echo "✅ Build complete! Run: ./easypanel"
+echo "✅ Build complete! Run: ./target/release/easypanel"
 echo "   Default credentials: admin / admin"
