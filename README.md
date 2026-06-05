@@ -27,7 +27,7 @@ cargo build --release --target x86_64-unknown-linux-musl
 ## 目录结构
 
 ```
-easypanel-rust/
+rspanel/
 ├── src/
 │   ├── main.rs              # Axum 路由 + 嵌入前端
 │   ├── config/mod.rs        # 配置读写（YAML/JSON）
