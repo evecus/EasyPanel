@@ -1,6 +1,6 @@
 use serde::Serialize;
 use std::time::Duration;
-use sysinfo::{CpuExt, CpuRefreshKind, DiskExt, NetworkExt, NetworksExt, RefreshKind, System, SystemExt};
+use sysinfo::{CpuExt, CpuRefreshKind, DiskExt, NetworkExt, RefreshKind, System, SystemExt};
 
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct SystemInfo {
