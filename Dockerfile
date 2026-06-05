@@ -9,11 +9,11 @@ RUN apk add --no-cache ca-certificates tzdata
 RUN mkdir -p /app/data /app/config && chmod 755 /app/data /app/config
 
 # 根据目标架构自动选择预编译的静态二进制
-COPY easypanel-linux-${TARGETARCH}-bin /app/easypanel
-RUN chmod +x /app/easypanel
+COPY rspanel-linux-${TARGETARCH}-bin /app/rspanel
+RUN chmod +x /app/rspanel
 
 VOLUME ["/app/data", "/app/config"]
 
 EXPOSE 3088
 
-ENTRYPOINT ["/app/easypanel"]
+ENTRYPOINT ["/app/rspanel"]
