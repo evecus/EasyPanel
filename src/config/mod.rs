@@ -10,7 +10,7 @@ pub static SETTINGS: RwLock<Option<Arc<PanelSettings>>> = RwLock::new(None);
 
 pub const DATA_DIR: &str = "data";
 pub const CONFIG_DIR: &str = "config";
-pub const CONFIG_PATH: &str = "config/easypanel.yaml";
+pub const CONFIG_PATH: &str = "config/rspanel.yaml";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
@@ -122,16 +122,16 @@ pub fn init() -> Result<()> {
 fn load_main() -> Result<()> {
     fs::create_dir_all(CONFIG_DIR)?;
     if !Path::new(CONFIG_PATH).exists() {
-        if Path::new("easypanel.yaml").exists() {
-            let data = fs::read("easypanel.yaml")?;
+        if Path::new("rspanel.yaml").exists() {
+            let data = fs::read("rspanel.yaml")?;
             fs::write(CONFIG_PATH, &data)?;
-            fs::rename("easypanel.yaml", "easypanel.yaml.bak").ok();
+            fs::rename("rspanel.yaml", "rspanel.yaml.bak").ok();
         } else {
             return create_default_main();
         }
     }
     let data = fs::read_to_string(CONFIG_PATH)?;
-    let cfg: MainConfig = serde_yaml::from_str(&data).context("parse easypanel.yaml")?;
+    let cfg: MainConfig = serde_yaml::from_str(&data).context("parse rspanel.yaml")?;
     *MAIN.write().unwrap() = Some(Arc::new(cfg));
     Ok(())
 }
@@ -160,6 +160,7 @@ fn save_main_inner(cfg: &MainConfig) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn save_main() -> Result<()> {
     let guard = MAIN.read().unwrap();
     if let Some(cfg) = guard.as_ref() { save_main_inner(cfg) } else { Ok(()) }
@@ -211,7 +212,7 @@ fn load_settings() -> Result<()> {
 
 fn default_settings() -> PanelSettings {
     PanelSettings {
-        hostname: "EasyPanel".into(),
+        hostname: "RsPanel".into(),
         wallpaper: "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1920&q=80".into(),
         theme: "purple-pink".into(),
         language: "zh".into(),

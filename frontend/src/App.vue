@@ -27,7 +27,7 @@
 
       <!-- Hero -->
       <div class="hero">
-        <div class="hero-hostname" :style="hostnameStyle">{{ panelInfo.hostname || 'EasyPanel' }}</div>
+        <div class="hero-hostname" :style="hostnameStyle">{{ panelInfo.hostname || 'RsPanel' }}</div>
         <div class="hero-clock" :style="clockStyle" v-html="clockHtml"></div>
       </div>
 

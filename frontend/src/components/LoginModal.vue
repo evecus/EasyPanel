@@ -1,7 +1,7 @@
 <template>
   <div class="login-overlay" v-if="visible">
     <div class="login-card">
-      <div class="login-title"><span>EasyPanel</span></div>
+      <div class="login-title"><span>RsPanel</span></div>
       <div class="login-sub">{{ subtitle }}</div>
       <div class="fg">
         <span class="fi">👤</span>
@@ -15,7 +15,7 @@
       </div>
       <p v-if="error" class="login-err">{{ t('loginErr') }}</p>
       <button class="login-btn" @click="submit">{{ t('loginBtn') }}</button>
-      <p class="login-foot">Powered By EasyPanel</p>
+      <p class="login-foot">Powered By RsPanel</p>
     </div>
   </div>
 </template>

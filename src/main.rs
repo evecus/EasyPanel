@@ -145,7 +145,7 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "easypanel=info,tower_http=warn".into()),
+                .unwrap_or_else(|_| "rspanel=info,tower_http=warn".into()),
         )
         .init();
 
@@ -231,8 +231,8 @@ async fn main() -> anyhow::Result<()> {
         .with_state(state);
 
     let addr: SocketAddr = format!("0.0.0.0:{}", port).parse()?;
-    info!("\n🚀 EasyPanel running on http://{}", addr);
-    println!("\n🚀 EasyPanel running on http://{}", addr);
+    info!("\n🚀 RsPanel running on http://{}", addr);
+    println!("\n🚀 RsPanel running on http://{}", addr);
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())

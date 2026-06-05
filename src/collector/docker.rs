@@ -200,7 +200,7 @@ pub fn read_compose_file(path: &str) -> Result<String> {
     Ok(std::fs::read_to_string(path)?)
 }
 
-pub fn write_and_apply_compose(path: &str, content: &str, container_id: &str) -> Result<String> {
+pub fn write_and_apply_compose(path: &str, content: &str, _container_id: &str) -> Result<String> {
     std::fs::write(path, content)?;
 
     let dir = std::path::Path::new(path)
