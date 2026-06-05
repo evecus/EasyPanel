@@ -1,9 +1,6 @@
-name: 测试
+name: test
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       version:
