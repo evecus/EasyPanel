@@ -1,6 +1,5 @@
-# EasyPanel (Rust)
+# rspanel
 
-Go 后端已用 **Rust + Axum** 重写，前端 Vue 3 通过 `rust-embed` 嵌入二进制，发布产物为单一可执行文件。
 
 ## 架构变化
 
