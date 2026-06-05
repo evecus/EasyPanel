@@ -1,9 +1,6 @@
-name: 构建发布release和docker
+name: build
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       version:
@@ -18,9 +15,9 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-musl
-            artifact: easypanel-linux-amd64
+            artifact: rspanel-linux-amd64
           - target: aarch64-unknown-linux-musl
-            artifact: easypanel-linux-arm64
+            artifact: rspanel-linux-arm64
 
     steps:
       # 1. 拉取代码
@@ -66,6 +63,11 @@ jobs:
             echo "version=dev" >> $GITHUB_OUTPUT
           fi
 
+      - name: Inject version into Cargo.toml
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          sed -i "s/^version = .*/version = \"${VERSION#v}\"/" Cargo.toml
+
       # 5. 编译 Rust 后端（静态链接，单文件，嵌入前端）
       - name: Build Backend
         env:
@@ -73,7 +75,7 @@ jobs:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: aarch64-linux-gnu-gcc
         run: |
           cargo build --release --target ${{ matrix.target }}
-          cp target/${{ matrix.target }}/release/easypanel ${{ matrix.artifact }}
+          cp target/${{ matrix.target }}/release/rspanel ${{ matrix.artifact }}
 
       # 6. 始终上传 Artifact
       - name: Upload Artifact
@@ -109,10 +111,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.version }}
-          name: EasyPanel ${{ steps.ver.outputs.version }}
+          name: rspanel ${{ steps.ver.outputs.version }}
           files: |
-            easypanel-linux-amd64/easypanel-linux-amd64
-            easypanel-linux-arm64/easypanel-linux-arm64
+            rspanel-linux-amd64/rspanel-linux-amd64
+            rspanel-linux-arm64/rspanel-linux-arm64
 
       # 构建并推送 Docker 镜像
       - name: Set up Docker Buildx
@@ -126,8 +128,8 @@ jobs:
 
       - name: Copy binaries for Docker
         run: |
-          cp easypanel-linux-amd64/easypanel-linux-amd64 easypanel-linux-amd64-bin
-          cp easypanel-linux-arm64/easypanel-linux-arm64 easypanel-linux-arm64-bin
+          cp rspanel-linux-amd64/rspanel-linux-amd64 rspanel-linux-amd64-bin
+          cp rspanel-linux-arm64/rspanel-linux-arm64 rspanel-linux-arm64-bin
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -139,5 +141,5 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/easypanel:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/easypanel:${{ steps.ver.outputs.version }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/rspanel:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/rspanel:${{ steps.ver.outputs.version }}
