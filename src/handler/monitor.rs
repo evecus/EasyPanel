@@ -1,13 +1,13 @@
-use axum::{extract::{Extension, Path}, http::StatusCode, Json};
+use axum::{extract::Path, http::StatusCode, Json};
 use serde::Deserialize;
-use std::{collections::HashMap, sync::Arc};
-use crate::{AppState, collector::{
+use std::collections::HashMap;
+use crate::collector::{
     cache::{get_containers_from_cache, get_services_from_cache, invalidate_docker_cache, invalidate_systemd_cache},
     docker::{container_action, get_container_logs, inspect_container, read_compose_file, write_and_apply_compose, pull_and_update_container},
     process::{get_processes, kill_process},
     system::collect_all,
     systemd::{service_action, get_service_logs},
-}};
+};
 
 pub async fn get_metrics_all() -> Json<serde_json::Value> {
     let metrics = tokio::task::spawn_blocking(collect_all).await.unwrap();
