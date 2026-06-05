@@ -1,10 +1,15 @@
+use crate::{
+    config::{self, DisplayConfig, PanelSettings},
+    AppState,
+};
 use axum::{extract::Extension, Json};
 use std::sync::Arc;
-use crate::{config::{self, DisplayConfig, PanelSettings}, AppState};
 
 fn is_mobile(ua: &str) -> bool {
     let ua = ua.to_lowercase();
-    ["android", "iphone", "ipod", "windows phone", "mobile"].iter().any(|kw| ua.contains(kw))
+    ["android", "iphone", "ipod", "windows phone", "mobile"]
+        .iter()
+        .any(|kw| ua.contains(kw))
 }
 
 fn resolve_disp(d: &DisplayConfig, s: &PanelSettings) -> serde_json::Value {
@@ -23,23 +28,31 @@ fn resolve_disp(d: &DisplayConfig, s: &PanelSettings) -> serde_json::Value {
     })
 }
 
-pub async fn get_panel_info(
-    Extension(state): Extension<Arc<AppState>>,
-) -> Json<serde_json::Value> {
+pub async fn get_panel_info(Extension(state): Extension<Arc<AppState>>) -> Json<serde_json::Value> {
     let s = config::get_settings();
     let main = config::get_main();
     let mobile = is_mobile(state.user_agent.as_deref().unwrap_or(""));
 
     let default_disp = DisplayConfig::default();
-    let active_disp = if mobile { s.mobile.as_ref().unwrap_or(&default_disp) }
-    else { s.desktop.as_ref().unwrap_or(&default_disp) };
+    let active_disp = if mobile {
+        s.mobile.as_ref().unwrap_or(&default_disp)
+    } else {
+        s.desktop.as_ref().unwrap_or(&default_disp)
+    };
     let d = resolve_disp(active_disp, &s);
 
     let fallback_disp = DisplayConfig {
-        hostname_size: s.hostname_size, clock_size: s.clock_size, icon_size: s.icon_size,
-        app_name_size: s.app_name_size, icon_radius: s.icon_radius, icon_gap: s.icon_gap,
-        side_padding: s.side_padding, font_hostname: s.font_hostname.clone(),
-        font_clock: s.font_clock.clone(), font_appname: s.font_appname.clone(), font_ui: s.font_ui.clone(),
+        hostname_size: s.hostname_size,
+        clock_size: s.clock_size,
+        icon_size: s.icon_size,
+        app_name_size: s.app_name_size,
+        icon_radius: s.icon_radius,
+        icon_gap: s.icon_gap,
+        side_padding: s.side_padding,
+        font_hostname: s.font_hostname.clone(),
+        font_clock: s.font_clock.clone(),
+        font_appname: s.font_appname.clone(),
+        font_ui: s.font_ui.clone(),
     };
     let desktop_disp = s.desktop.clone().unwrap_or_else(|| fallback_disp.clone());
     let mobile_disp = s.mobile.clone().unwrap_or(fallback_disp);
@@ -62,7 +75,10 @@ pub async fn get_panel_info(
 
 pub async fn get_apps() -> Json<serde_json::Value> {
     Json(serde_json::Value::Array(
-        config::get_apps().into_iter().map(|a| serde_json::to_value(a).unwrap()).collect()
+        config::get_apps()
+            .into_iter()
+            .map(|a| serde_json::to_value(a).unwrap())
+            .collect(),
     ))
 }
 
@@ -75,22 +91,36 @@ pub async fn fetch_icon(
     let raw_url = raw_url.trim();
     let raw_url = if !raw_url.starts_with("http://") && !raw_url.starts_with("https://") {
         format!("http://{}", raw_url)
-    } else { raw_url.to_string() };
+    } else {
+        raw_url.to_string()
+    };
 
     let Ok(parsed) = url::Url::parse(&raw_url) else {
         return Json(serde_json::json!({"error": "invalid url"}));
     };
-    let base = format!("{}://{}", parsed.scheme(), parsed.host_str().unwrap_or_default());
+    let base = format!(
+        "{}://{}",
+        parsed.scheme(),
+        parsed.host_str().unwrap_or_default()
+    );
     let scheme = parsed.scheme().to_string();
 
     let icon_url = if let Ok(resp) = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(6)).build().unwrap()
-        .get(&raw_url).send().await
+        .timeout(std::time::Duration::from_secs(6))
+        .build()
+        .unwrap()
+        .get(&raw_url)
+        .send()
+        .await
     {
         if let Ok(body) = resp.text().await {
             parse_favicon_from_html(&body, &base, &scheme)
-        } else { None }
-    } else { None };
+        } else {
+            None
+        }
+    } else {
+        None
+    };
 
     let icon_url = icon_url.unwrap_or_else(|| format!("{}/favicon.ico", base));
     Json(serde_json::json!({"icon": icon_url}))
@@ -100,12 +130,19 @@ fn parse_favicon_from_html(html: &str, base: &str, scheme: &str) -> Option<Strin
     use regex::Regex;
     let re1 = Regex::new(r#"(?i)<link[^>]+rel=["'](?:shortcut icon|icon|apple-touch-icon)["'][^>]+href=["']([^"']+)["']"#).ok()?;
     let re2 = Regex::new(r#"(?i)<link[^>]+href=["']([^"']+)["'][^>]+rel=["'](?:shortcut icon|icon|apple-touch-icon)["']"#).ok()?;
-    let href = re1.captures(html).and_then(|m| m.get(1))
+    let href = re1
+        .captures(html)
+        .and_then(|m| m.get(1))
         .or_else(|| re2.captures(html).and_then(|m| m.get(1)))
         .map(|m| m.as_str().to_string())?;
-    let url = if href.starts_with("//") { format!("{}:{}", scheme, href) }
-    else if href.starts_with('/') { format!("{}{}", base, href) }
-    else if !href.starts_with("http") { format!("{}/{}", base, href) }
-    else { href };
+    let url = if href.starts_with("//") {
+        format!("{}:{}", scheme, href)
+    } else if href.starts_with('/') {
+        format!("{}{}", base, href)
+    } else if !href.starts_with("http") {
+        format!("{}/{}", base, href)
+    } else {
+        href
+    };
     Some(url)
 }

@@ -24,7 +24,14 @@ pub struct SystemdService {
 
 pub fn get_services() -> Result<Vec<SystemdService>> {
     let out = Command::new("systemctl")
-        .args(["list-units", "--type=service", "--all", "--no-pager", "--plain", "--no-legend"])
+        .args([
+            "list-units",
+            "--type=service",
+            "--all",
+            "--no-pager",
+            "--plain",
+            "--no-legend",
+        ])
         .output()?;
 
     let text = String::from_utf8_lossy(&out.stdout);
@@ -40,7 +47,11 @@ pub fn get_services() -> Result<Vec<SystemdService>> {
             load: fields[1].to_string(),
             active: fields[2].to_string(),
             sub: fields[3].to_string(),
-            description: if fields.len() > 4 { fields[4..].join(" ") } else { String::new() },
+            description: if fields.len() > 4 {
+                fields[4..].join(" ")
+            } else {
+                String::new()
+            },
             ..Default::default()
         };
 
@@ -58,9 +69,14 @@ pub fn get_services() -> Result<Vec<SystemdService>> {
 
 fn enrich_service(svc: &mut SystemdService) {
     let props = [
-        "MainPID", "MemoryCurrent", "CPUUsageNSec",
-        "UnitFileState", "ExecStart", "FragmentPath",
-        "TasksCurrent", "ActiveEnterTimestamp",
+        "MainPID",
+        "MemoryCurrent",
+        "CPUUsageNSec",
+        "UnitFileState",
+        "ExecStart",
+        "FragmentPath",
+        "TasksCurrent",
+        "ActiveEnterTimestamp",
     ];
     let props_args: Vec<String> = props.iter().map(|p| format!("--property={}", p)).collect();
 
@@ -84,7 +100,9 @@ fn enrich_service(svc: &mut SystemdService) {
     if let Some(es) = kv.get("ExecStart") {
         if let Some(idx) = es.find("path=") {
             let rest = &es[idx + 5..];
-            let end = rest.find(|c: char| c == ' ' || c == ';').unwrap_or(rest.len());
+            let end = rest
+                .find(|c: char| c == ' ' || c == ';')
+                .unwrap_or(rest.len());
             svc.exec_start = rest[..end].to_string();
         }
     }
@@ -177,10 +195,18 @@ pub fn sort_services(services: &mut Vec<SystemdService>, sort_by: &str, sort_dir
     let asc = sort_dir == "asc";
     match sort_by {
         "memory" => services.sort_by(|a, b| {
-            if asc { a.memory_bytes.cmp(&b.memory_bytes) } else { b.memory_bytes.cmp(&a.memory_bytes) }
+            if asc {
+                a.memory_bytes.cmp(&b.memory_bytes)
+            } else {
+                b.memory_bytes.cmp(&a.memory_bytes)
+            }
         }),
         "unit" => services.sort_by(|a, b| {
-            if asc { a.unit.cmp(&b.unit) } else { b.unit.cmp(&a.unit) }
+            if asc {
+                a.unit.cmp(&b.unit)
+            } else {
+                b.unit.cmp(&a.unit)
+            }
         }),
         _ => {}
     }

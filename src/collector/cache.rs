@@ -18,7 +18,11 @@ struct Cache<T: Clone> {
 
 impl<T: Clone> Cache<T> {
     fn new() -> Self {
-        Self { data: None, updated_at: None, ready: false }
+        Self {
+            data: None,
+            updated_at: None,
+            ready: false,
+        }
     }
 }
 
@@ -28,7 +32,10 @@ static SYSTEMD_CACHE: Lazy<Arc<RwLock<Cache<SystemdService>>>> =
 static DOCKER_CACHE: Lazy<Arc<RwLock<Cache<Container>>>> =
     Lazy::new(|| Arc::new(RwLock::new(Cache::new())));
 
-pub fn get_services_from_cache(sort_by: &str, sort_dir: &str) -> Result<Vec<SystemdService>, String> {
+pub fn get_services_from_cache(
+    sort_by: &str,
+    sort_dir: &str,
+) -> Result<Vec<SystemdService>, String> {
     let ready = {
         let guard = SYSTEMD_CACHE.read().unwrap();
         guard.ready

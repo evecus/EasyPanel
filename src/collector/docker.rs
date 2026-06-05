@@ -117,9 +117,7 @@ fn parse_mem_str(s: &str) -> u64 {
 }
 
 pub fn container_action(id: &str, action: &str) -> Result<()> {
-    let status = Command::new("docker")
-        .args([action, id])
-        .status()?;
+    let status = Command::new("docker").args([action, id]).status()?;
     if status.success() {
         Ok(())
     } else {
@@ -135,29 +133,54 @@ pub fn get_container_logs(id: &str, lines: usize) -> Result<String> {
 pub fn inspect_container(id: &str) -> Result<InspectResult> {
     let out = run_cmd_timeout("docker", &["inspect", id], 10)?;
     let raw: Vec<serde_json::Value> = serde_json::from_str(&out)?;
-    let c = raw.into_iter().next().ok_or_else(|| anyhow::anyhow!("empty inspect"))?;
+    let c = raw
+        .into_iter()
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("empty inspect"))?;
 
     let mut result = InspectResult::default();
 
     if let Some(cfg) = c.get("Config").and_then(|v| v.as_object()) {
-        result.image = cfg.get("Image").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+        result.image = cfg
+            .get("Image")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .to_string();
         if let Some(env) = cfg.get("Env").and_then(|v| v.as_array()) {
-            result.env = env.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect();
+            result.env = env
+                .iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect();
         }
         if let Some(cmd) = cfg.get("Cmd").and_then(|v| v.as_array()) {
-            result.cmd = cmd.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect();
+            result.cmd = cmd
+                .iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect();
         }
     }
 
     if let Some(state) = c.get("State").and_then(|v| v.as_object()) {
-        result.status = state.get("Status").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+        result.status = state
+            .get("Status")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .to_string();
     }
 
-    result.created = c.get("Created").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+    result.created = c
+        .get("Created")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default()
+        .to_string();
 
     if let Some(host_cfg) = c.get("HostConfig").and_then(|v| v.as_object()) {
         if let Some(rp) = host_cfg.get("RestartPolicy").and_then(|v| v.as_object()) {
-            result.restart_policy = rp.get("Name").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+            result.restart_policy = rp
+                .get("Name")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string();
         }
     }
 
@@ -166,7 +189,10 @@ pub fn inspect_container(id: &str) -> Result<InspectResult> {
             .iter()
             .filter_map(|m| {
                 let src = m.get("Source").and_then(|v| v.as_str()).unwrap_or_default();
-                let dst = m.get("Destination").and_then(|v| v.as_str()).unwrap_or_default();
+                let dst = m
+                    .get("Destination")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_default();
                 if src.is_empty() && dst.is_empty() {
                     None
                 } else {
@@ -187,7 +213,10 @@ pub fn inspect_container(id: &str) -> Result<InspectResult> {
     // Find compose file from labels
     if let Some(cfg) = c.get("Config").and_then(|v| v.as_object()) {
         if let Some(labels) = cfg.get("Labels").and_then(|v| v.as_object()) {
-            if let Some(wdir) = labels.get("com.docker.compose.project.working_dir").and_then(|v| v.as_str()) {
+            if let Some(wdir) = labels
+                .get("com.docker.compose.project.working_dir")
+                .and_then(|v| v.as_str())
+            {
                 result.compose_file = format!("{}/docker-compose.yml", wdir);
             }
         }
@@ -227,7 +256,11 @@ pub fn write_and_apply_compose(path: &str, content: &str, _container_id: &str) -
 
 pub fn pull_and_update_container(id: &str) -> Result<String> {
     // Get image name first
-    let image_out = run_cmd_timeout("docker", &["inspect", "--format", "{{.Config.Image}}", id], 5)?;
+    let image_out = run_cmd_timeout(
+        "docker",
+        &["inspect", "--format", "{{.Config.Image}}", id],
+        5,
+    )?;
     let image = image_out.trim();
 
     let pull_out = Command::new("docker").args(["pull", image]).output()?;

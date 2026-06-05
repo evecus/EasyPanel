@@ -1,7 +1,7 @@
+use crate::collector::cache::{invalidate_docker_cache, invalidate_systemd_cache};
+use crate::config::{self, PanelSettings};
 use axum::{http::StatusCode, Json};
 use std::sync::Arc;
-use crate::config::{self, PanelSettings};
-use crate::collector::cache::{invalidate_docker_cache, invalidate_systemd_cache};
 
 pub async fn get_settings() -> Json<serde_json::Value> {
     Json(serde_json::to_value(&*config::get_settings()).unwrap())
@@ -12,12 +12,20 @@ pub async fn update_settings(
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
     {
         let old = config::get_settings();
-        if old.feature_systemd && !new_settings.feature_systemd { invalidate_systemd_cache(); }
-        if old.feature_docker && !new_settings.feature_docker { invalidate_docker_cache(); }
+        if old.feature_systemd && !new_settings.feature_systemd {
+            invalidate_systemd_cache();
+        }
+        if old.feature_docker && !new_settings.feature_docker {
+            invalidate_docker_cache();
+        }
     }
     *config::SETTINGS.write().unwrap() = Some(Arc::new(new_settings));
-    config::save_settings()
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error":"save failed"}))))?;
+    config::save_settings().map_err(|_| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error":"save failed"})),
+        )
+    })?;
     Ok(Json(serde_json::json!({"ok": true})))
 }
 
@@ -26,12 +34,21 @@ pub async fn get_public_mode() -> Json<serde_json::Value> {
 }
 
 #[derive(serde::Deserialize)]
-pub struct PublicModeReq { pub public_mode: bool }
+pub struct PublicModeReq {
+    pub public_mode: bool,
+}
 
 pub async fn set_public_mode(
     Json(req): Json<PublicModeReq>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<serde_json::Value>)> {
-    config::with_main_mut(|cfg| { cfg.public_mode = req.public_mode; })
-        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({"error":"save failed"}))))?;
+    config::with_main_mut(|cfg| {
+        cfg.public_mode = req.public_mode;
+    })
+    .map_err(|_| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({"error":"save failed"})),
+        )
+    })?;
     Ok(Json(serde_json::json!({"ok": true})))
 }

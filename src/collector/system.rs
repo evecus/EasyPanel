@@ -103,20 +103,26 @@ fn format_uptime(secs: u64) -> String {
     let d = secs / 86400;
     let h = (secs % 86400) / 3600;
     let m = (secs % 3600) / 60;
-    if d > 0 { format!("{}d {}h {}m", d, h, m) } else { format!("{}h {}m", h, m) }
+    if d > 0 {
+        format!("{}d {}h {}m", d, h, m)
+    } else {
+        format!("{}h {}m", h, m)
+    }
 }
 
 pub fn get_system_info() -> SystemInfo {
-    let mut sys = System::new_with_specifics(
-        RefreshKind::new().with_cpu(CpuRefreshKind::everything()),
-    );
+    let mut sys =
+        System::new_with_specifics(RefreshKind::new().with_cpu(CpuRefreshKind::everything()));
     std::thread::sleep(Duration::from_millis(100));
     sys.refresh_cpu();
 
     let uptime = sys.uptime();
     let boot_time = sys.boot_time();
     let cpus = sys.cpus();
-    let cpu_model = cpus.first().map(|c| c.brand().to_string()).unwrap_or_default();
+    let cpu_model = cpus
+        .first()
+        .map(|c| c.brand().to_string())
+        .unwrap_or_default();
     let cpu_threads = cpus.len() as u32;
     let cpu_cores = sys.physical_core_count().unwrap_or(cpu_threads as usize) as u32;
 
@@ -147,20 +153,29 @@ fn local_ip_simple() -> Option<String> {
 }
 
 pub fn get_cpu_stats() -> CpuStats {
-    let mut sys = System::new_with_specifics(
-        RefreshKind::new().with_cpu(CpuRefreshKind::everything()),
-    );
+    let mut sys =
+        System::new_with_specifics(RefreshKind::new().with_cpu(CpuRefreshKind::everything()));
     std::thread::sleep(Duration::from_millis(300));
     sys.refresh_cpu();
 
     let cpus = sys.cpus();
     let per_core: Vec<f32> = cpus.iter().map(|c| c.cpu_usage()).collect();
-    let usage_percent = if per_core.is_empty() { 0.0 }
-    else { per_core.iter().sum::<f32>() / per_core.len() as f32 };
+    let usage_percent = if per_core.is_empty() {
+        0.0
+    } else {
+        per_core.iter().sum::<f32>() / per_core.len() as f32
+    };
     let frequency_mhz = cpus.first().map(|c| c.frequency()).unwrap_or(0);
     let (load1, load5, load15) = read_loadavg();
 
-    CpuStats { usage_percent, per_core_usage: per_core, load_avg_1: load1, load_avg_5: load5, load_avg_15: load15, frequency_mhz }
+    CpuStats {
+        usage_percent,
+        per_core_usage: per_core,
+        load_avg_1: load1,
+        load_avg_5: load5,
+        load_avg_15: load15,
+        frequency_mhz,
+    }
 }
 
 fn read_loadavg() -> (f64, f64, f64) {
@@ -185,14 +200,34 @@ pub fn get_memory_stats() -> MemoryStats {
     let used = sys.used_memory();
     let available = sys.available_memory();
     let free = total.saturating_sub(used);
-    let used_percent = if total > 0 { (used as f64 / total as f64) * 100.0 } else { 0.0 };
+    let used_percent = if total > 0 {
+        (used as f64 / total as f64) * 100.0
+    } else {
+        0.0
+    };
     let swap_total = sys.total_swap();
     let swap_used = sys.used_swap();
     let swap_free = swap_total.saturating_sub(swap_used);
-    let swap_percent = if swap_total > 0 { (swap_used as f64 / swap_total as f64) * 100.0 } else { 0.0 };
+    let swap_percent = if swap_total > 0 {
+        (swap_used as f64 / swap_total as f64) * 100.0
+    } else {
+        0.0
+    };
     let (cached, buffers) = read_meminfo_cached_buffers();
 
-    MemoryStats { total, used, free, available, used_percent, swap_total, swap_used, swap_free, swap_percent, cached, buffers }
+    MemoryStats {
+        total,
+        used,
+        free,
+        available,
+        used_percent,
+        swap_total,
+        swap_used,
+        swap_free,
+        swap_percent,
+        cached,
+        buffers,
+    }
 }
 
 fn read_meminfo_cached_buffers() -> (u64, u64) {
@@ -201,11 +236,19 @@ fn read_meminfo_cached_buffers() -> (u64, u64) {
     if let Ok(content) = std::fs::read_to_string("/proc/meminfo") {
         for line in content.lines() {
             if line.starts_with("Cached:") {
-                if let Some(v) = line.split_whitespace().nth(1).and_then(|s| s.parse::<u64>().ok()) {
+                if let Some(v) = line
+                    .split_whitespace()
+                    .nth(1)
+                    .and_then(|s| s.parse::<u64>().ok())
+                {
                     cached = v * 1024;
                 }
             } else if line.starts_with("Buffers:") {
-                if let Some(v) = line.split_whitespace().nth(1).and_then(|s| s.parse::<u64>().ok()) {
+                if let Some(v) = line
+                    .split_whitespace()
+                    .nth(1)
+                    .and_then(|s| s.parse::<u64>().ok())
+                {
                     buffers = v * 1024;
                 }
             }
@@ -228,7 +271,9 @@ pub fn get_disk_stats() -> DiskStats {
             continue;
         }
         let total = disk.total_space();
-        if total == 0 { continue; }
+        if total == 0 {
+            continue;
+        }
         let free = disk.available_space();
         let used = total.saturating_sub(free);
         let used_percent = (used as f64 / total as f64) * 100.0;
@@ -237,8 +282,12 @@ pub fn get_disk_stats() -> DiskStats {
             device: disk.name().to_string_lossy().to_string(),
             mountpoint: mount,
             fstype: disk.file_system().iter().map(|&b| b as char).collect(),
-            total, used, free, used_percent,
-            read_bytes: 0, write_bytes: 0,
+            total,
+            used,
+            free,
+            used_percent,
+            read_bytes: 0,
+            write_bytes: 0,
         });
     }
 
@@ -274,19 +323,39 @@ pub fn get_network_stats() -> NetworkStats {
         });
     }
 
-    NetworkStats { interfaces, total_sent, total_recv, connections: 0 }
+    NetworkStats {
+        interfaces,
+        total_sent,
+        total_recv,
+        connections: 0,
+    }
 }
 
 pub fn get_temperatures() -> Vec<Temperature> {
     let mut temps = vec![];
     for i in 0..10 {
-        let Ok(data) = std::fs::read_to_string(format!("/sys/class/thermal/thermal_zone{}/temp", i)) else { break; };
+        let Ok(data) =
+            std::fs::read_to_string(format!("/sys/class/thermal/thermal_zone{}/temp", i))
+        else {
+            break;
+        };
         let millideg: f32 = data.trim().parse().unwrap_or(0.0);
-        if millideg == 0.0 { continue; }
+        if millideg == 0.0 {
+            continue;
+        }
         let sensor = std::fs::read_to_string(format!("/sys/class/thermal/thermal_zone{}/type", i))
-            .unwrap_or_default().trim().to_string();
-        let sensor = if sensor.is_empty() { format!("zone{}", i) } else { sensor };
-        temps.push(Temperature { sensor, temperature: millideg / 1000.0 });
+            .unwrap_or_default()
+            .trim()
+            .to_string();
+        let sensor = if sensor.is_empty() {
+            format!("zone{}", i)
+        } else {
+            sensor
+        };
+        temps.push(Temperature {
+            sensor,
+            temperature: millideg / 1000.0,
+        });
     }
     temps
 }

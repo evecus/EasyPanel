@@ -22,35 +22,51 @@ pub fn get_processes(sort_by: &str, sort_dir: &str, limit: usize) -> Result<Vec<
 
     let total_mem = sys.total_memory() as f32;
 
-    let mut infos: Vec<ProcessInfo> = sys.processes().values().map(|p| {
-        let mem_rss = p.memory();
-        let mem_percent = if total_mem > 0.0 { (mem_rss as f32 / total_mem) * 100.0 } else { 0.0 };
-        let cmdline = p.cmd().join(" ");
-        ProcessInfo {
-            pid: p.pid().as_u32(),
-            name: p.name().to_string(),
-            username: p.user_id().map(|u| u.to_string()).unwrap_or_default(),
-            cpu_percent: p.cpu_usage(),
-            mem_percent,
-            mem_rss,
-            status: format!("{:?}", p.status()),
-            cmdline,
-        }
-    }).collect();
+    let mut infos: Vec<ProcessInfo> = sys
+        .processes()
+        .values()
+        .map(|p| {
+            let mem_rss = p.memory();
+            let mem_percent = if total_mem > 0.0 {
+                (mem_rss as f32 / total_mem) * 100.0
+            } else {
+                0.0
+            };
+            let cmdline = p.cmd().join(" ");
+            ProcessInfo {
+                pid: p.pid().as_u32(),
+                name: p.name().to_string(),
+                username: p.user_id().map(|u| u.to_string()).unwrap_or_default(),
+                cpu_percent: p.cpu_usage(),
+                mem_percent,
+                mem_rss,
+                status: format!("{:?}", p.status()),
+                cmdline,
+            }
+        })
+        .collect();
 
     let asc = sort_dir == "asc";
     match sort_by {
         "mem" => infos.sort_by(|a, b| {
-            if asc { a.mem_percent.partial_cmp(&b.mem_percent).unwrap() }
-            else { b.mem_percent.partial_cmp(&a.mem_percent).unwrap() }
+            if asc {
+                a.mem_percent.partial_cmp(&b.mem_percent).unwrap()
+            } else {
+                b.mem_percent.partial_cmp(&a.mem_percent).unwrap()
+            }
         }),
         _ => infos.sort_by(|a, b| {
-            if asc { a.cpu_percent.partial_cmp(&b.cpu_percent).unwrap() }
-            else { b.cpu_percent.partial_cmp(&a.cpu_percent).unwrap() }
+            if asc {
+                a.cpu_percent.partial_cmp(&b.cpu_percent).unwrap()
+            } else {
+                b.cpu_percent.partial_cmp(&a.cpu_percent).unwrap()
+            }
         }),
     }
 
-    if limit > 0 && infos.len() > limit { infos.truncate(limit); }
+    if limit > 0 && infos.len() > limit {
+        infos.truncate(limit);
+    }
     Ok(infos)
 }
 
