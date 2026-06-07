@@ -1,4 +1,5 @@
 use serde::Serialize;
+use std::process::Command;
 use std::time::Duration;
 use sysinfo::{CpuExt, CpuRefreshKind, DiskExt, NetworkExt, RefreshKind, System, SystemExt};
 
