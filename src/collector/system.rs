@@ -262,6 +262,9 @@ pub fn get_disk_stats() -> DiskStats {
     sys.refresh_disks_list();
     sys.refresh_disks();
 
+    // Build a map of device short-name -> (read_bytes, write_bytes) from /proc/diskstats
+    let io_map = read_diskstats();
+
     let mut seen = std::collections::HashSet::new();
     let mut partitions = vec![];
 
@@ -278,26 +281,62 @@ pub fn get_disk_stats() -> DiskStats {
         let used = total.saturating_sub(free);
         let used_percent = (used as f64 / total as f64) * 100.0;
 
+        let device_full = disk.name().to_string_lossy().to_string();
+        let dev_short = device_full
+            .rsplit('/')
+            .next()
+            .unwrap_or(&device_full)
+            .to_string();
+        let (read_bytes, write_bytes) = io_map
+            .get(&dev_short)
+            .copied()
+            .unwrap_or((0, 0));
+
         partitions.push(DiskPartition {
-            device: disk.name().to_string_lossy().to_string(),
+            device: device_full,
             mountpoint: mount,
             fstype: disk.file_system().iter().map(|&b| b as char).collect(),
             total,
             used,
             free,
             used_percent,
-            read_bytes: 0,
-            write_bytes: 0,
+            read_bytes,
+            write_bytes,
         });
     }
 
     DiskStats { partitions }
 }
 
+/// Read /proc/diskstats and return map of device_name -> (read_bytes, write_bytes)
+fn read_diskstats() -> std::collections::HashMap<String, (u64, u64)> {
+    let mut map = std::collections::HashMap::new();
+    let Ok(content) = std::fs::read_to_string("/proc/diskstats") else {
+        return map;
+    };
+    for line in content.lines() {
+        let fields: Vec<&str> = line.split_whitespace().collect();
+        // /proc/diskstats columns: major minor name reads_comp reads_merged sectors_read ...
+        // sectors_read at index 5, sectors_written at index 9; each sector = 512 bytes
+        if fields.len() < 10 {
+            continue;
+        }
+        let name = fields[2].to_string();
+        let read_bytes = fields[5].parse::<u64>().unwrap_or(0) * 512;
+        let write_bytes = fields[9].parse::<u64>().unwrap_or(0) * 512;
+        map.insert(name, (read_bytes, write_bytes));
+    }
+    map
+}
+
 pub fn get_network_stats() -> NetworkStats {
     let mut sys = System::new_all();
     sys.refresh_networks_list();
     sys.refresh_networks();
+
+    // Build address map from /proc/net/if_inet6 and /proc/net/fib_trie is complex;
+    // use a simpler approach via `ip addr` parsing or /proc/net/arp
+    let addr_map = read_interface_addrs();
 
     let mut interfaces = vec![];
     let mut total_sent = 0u64;
@@ -311,6 +350,7 @@ pub fn get_network_stats() -> NetworkStats {
         let br = data.total_received();
         total_sent += bs;
         total_recv += br;
+        let addrs = addr_map.get(name).cloned().unwrap_or_default();
         interfaces.push(NetworkInterface {
             name: name.clone(),
             bytes_sent: bs,
@@ -319,7 +359,7 @@ pub fn get_network_stats() -> NetworkStats {
             packets_recv: data.total_packets_received(),
             speed_up: data.transmitted(),
             speed_down: data.received(),
-            addrs: vec![],
+            addrs,
         });
     }
 
@@ -327,8 +367,45 @@ pub fn get_network_stats() -> NetworkStats {
         interfaces,
         total_sent,
         total_recv,
-        connections: 0,
+        connections: count_tcp_connections(),
     }
+}
+
+/// Parse interface IPv4 addresses from /proc/net/fib_trie or fall back to `ip -o addr`
+fn read_interface_addrs() -> std::collections::HashMap<String, Vec<String>> {
+    let mut map: std::collections::HashMap<String, Vec<String>> = std::collections::HashMap::new();
+    // Use `ip -o addr show` which is widely available
+    if let Ok(out) = Command::new("ip").args(["-o", "addr", "show"]).output() {
+        for line in String::from_utf8_lossy(&out.stdout).lines() {
+            // Format: <idx>: <iface>    inet <addr>/<prefix> ...
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if parts.len() < 4 {
+                continue;
+            }
+            let iface = parts[1].trim_end_matches(':').to_string();
+            if parts[2] == "inet" || parts[2] == "inet6" {
+                map.entry(iface).or_default().push(parts[3].to_string());
+            }
+        }
+    }
+    map
+}
+
+fn count_tcp_connections() -> usize {
+    // Count established TCP connections from /proc/net/tcp and /proc/net/tcp6
+    let mut count = 0usize;
+    for path in &["/proc/net/tcp", "/proc/net/tcp6"] {
+        if let Ok(content) = std::fs::read_to_string(path) {
+            for line in content.lines().skip(1) {
+                let fields: Vec<&str> = line.split_whitespace().collect();
+                // Field 3 is the state; "01" = ESTABLISHED
+                if fields.get(3) == Some(&"01") {
+                    count += 1;
+                }
+            }
+        }
+    }
+    count
 }
 
 pub fn get_temperatures() -> Vec<Temperature> {

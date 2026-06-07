@@ -14,13 +14,37 @@ pub struct ProcessInfo {
     pub cmdline: String,
 }
 
+/// 读取 /etc/passwd，构建 uid_str -> username 映射
+fn build_uid_map() -> std::collections::HashMap<String, String> {
+    let mut map = std::collections::HashMap::new();
+    if let Ok(content) = std::fs::read_to_string("/etc/passwd") {
+        for line in content.lines() {
+            let parts: Vec<&str> = line.split(':').collect();
+            // passwd 格式: username:x:uid:gid:...
+            if parts.len() >= 3 {
+                map.insert(parts[2].to_string(), parts[0].to_string());
+            }
+        }
+    }
+    map
+}
+
 pub fn get_processes(sort_by: &str, sort_dir: &str, limit: usize) -> Result<Vec<ProcessInfo>> {
+    // sysinfo 需要两次采样才能计算 CPU 使用率：
+    // 第一次 refresh 建立基线，等 200ms 后第二次 refresh 才能得到非零 cpu_usage()。
+    // Go 版的 gopsutil CPUPercent() 内部自动完成了这个时间差计算。
     let mut sys = System::new_with_specifics(
         RefreshKind::new().with_processes(ProcessRefreshKind::everything()),
     );
     sys.refresh_processes();
+    std::thread::sleep(std::time::Duration::from_millis(200));
+    sys.refresh_processes();
+    sys.refresh_memory();
 
     let total_mem = sys.total_memory() as f32;
+
+    // 预先构建 UID -> 用户名映射，避免每个进程反复读 /etc/passwd
+    let uid_map = build_uid_map();
 
     let mut infos: Vec<ProcessInfo> = sys
         .processes()
@@ -33,10 +57,18 @@ pub fn get_processes(sort_by: &str, sort_dir: &str, limit: usize) -> Result<Vec<
                 0.0
             };
             let cmdline = p.cmd().join(" ");
+            // 将 UID 数字解析为用户名，与 Go 版 process.Username() 行为一致
+            let username = p
+                .user_id()
+                .map(|uid| {
+                    let uid_str = uid.to_string();
+                    uid_map.get(&uid_str).cloned().unwrap_or(uid_str)
+                })
+                .unwrap_or_default();
             ProcessInfo {
                 pid: p.pid().as_u32(),
                 name: p.name().to_string(),
-                username: p.user_id().map(|u| u.to_string()).unwrap_or_default(),
+                username,
                 cpu_percent: p.cpu_usage(),
                 mem_percent,
                 mem_rss,

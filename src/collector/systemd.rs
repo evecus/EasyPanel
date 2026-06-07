@@ -128,12 +128,29 @@ fn enrich_service(svc: &mut SystemdService) {
 
 fn get_unit_file_state(svc: &mut SystemdService) {
     let out = Command::new("systemctl")
-        .args(["show", &svc.unit, "--no-pager", "--property=UnitFileState"])
+        .args([
+            "show",
+            &svc.unit,
+            "--no-pager",
+            "--property=UnitFileState",
+            "--property=FragmentPath",
+            "--property=ExecStart",
+        ])
         .output();
     if let Ok(out) = out {
         let text = String::from_utf8_lossy(&out.stdout);
         let kv = parse_kv(&text);
         svc.unit_file_state = kv.get("UnitFileState").cloned().unwrap_or_default();
+        svc.fragment_path = kv.get("FragmentPath").cloned().unwrap_or_default();
+        if let Some(es) = kv.get("ExecStart") {
+            if let Some(idx) = es.find("path=") {
+                let rest = &es[idx + 5..];
+                let end = rest
+                    .find(|c: char| c == ' ' || c == ';')
+                    .unwrap_or(rest.len());
+                svc.exec_start = rest[..end].to_string();
+            }
+        }
     }
 }
 
@@ -186,7 +203,14 @@ pub fn service_action(unit: &str, action: &str) -> Result<()> {
 
 pub fn get_service_logs(unit: &str, lines: usize) -> Result<String> {
     let out = Command::new("journalctl")
-        .args(["-u", unit, "-n", &lines.to_string(), "--no-pager"])
+        .args([
+            "-u",
+            unit,
+            "-n",
+            &lines.to_string(),
+            "--no-pager",
+            "--output=short-iso",
+        ])
         .output()?;
     Ok(String::from_utf8_lossy(&out.stdout).to_string())
 }

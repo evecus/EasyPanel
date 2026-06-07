@@ -126,8 +126,20 @@ pub fn container_action(id: &str, action: &str) -> Result<()> {
 }
 
 pub fn get_container_logs(id: &str, lines: usize) -> Result<String> {
-    let out = run_cmd_timeout("docker", &["logs", "--tail", &lines.to_string(), id], 10)?;
-    Ok(out)
+    use std::process::Stdio;
+    // Docker logs writes container output to stdout but its own stderr too;
+    // CombinedOutput is needed to match the Go version's behaviour.
+    let output = Command::new("docker")
+        .args(["logs", "--tail", &lines.to_string(), id])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .output()?;
+    let combined = format!(
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+    Ok(combined)
 }
 
 pub fn inspect_container(id: &str) -> Result<InspectResult> {
@@ -230,24 +242,46 @@ pub fn read_compose_file(path: &str) -> Result<String> {
 }
 
 pub fn write_and_apply_compose(path: &str, content: &str, _container_id: &str) -> Result<String> {
+    use std::process::Stdio;
     std::fs::write(path, content)?;
 
     let dir = std::path::Path::new(path)
         .parent()
         .ok_or_else(|| anyhow::anyhow!("invalid path"))?;
 
-    let out = Command::new("docker")
-        .args(["compose", "up", "-d", "--build"])
+    // docker compose down then up -d  (matching Go behaviour)
+    let down_out = Command::new("docker")
+        .args(["compose", "-f", path, "down"])
         .current_dir(dir)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .output()?;
-
-    let log = format!(
-        "{}\n{}",
-        String::from_utf8_lossy(&out.stdout),
-        String::from_utf8_lossy(&out.stderr)
+    let down_log = format!(
+        "{}{}",
+        String::from_utf8_lossy(&down_out.stdout),
+        String::from_utf8_lossy(&down_out.stderr)
     );
 
-    if out.status.success() {
+    let up_out = Command::new("docker")
+        .args(["compose", "-f", path, "up", "-d"])
+        .current_dir(dir)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .output()?;
+    let up_log = format!(
+        "{}{}",
+        String::from_utf8_lossy(&up_out.stdout),
+        String::from_utf8_lossy(&up_out.stderr)
+    );
+
+    let log = format!(
+        "=== Working dir: {} ===\n\n=== docker compose down ===\n{}\n=== docker compose up -d ===\n{}",
+        dir.display(),
+        down_log,
+        up_log
+    );
+
+    if up_out.status.success() {
         Ok(log)
     } else {
         Err(anyhow::anyhow!("{}", log))
