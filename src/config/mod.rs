@@ -39,11 +39,6 @@ pub fn config_path() -> String {
         .unwrap_or_else(|| "data/config/rspanel.yaml".into())
 }
 
-// Keep these as pub aliases so handler code that still imports them compiles
-pub fn DATA_DIR() -> String {
-    data_dir()
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
     pub username: String,
