@@ -109,11 +109,21 @@ var (
 	DataDir  = "data"
 )
 
+// configDir 和 configPath 均相对于 DataDir
+func configDir() string  { return DataDir + "/config" }
+func configPath() string { return DataDir + "/config/easypanel.yaml" }
+
+// SetDataDir 在 Init 之前调用，覆盖默认数据目录
+func SetDataDir(dir string) {
+	DataDir = dir
+}
+
 // ── Init ─────────────────────────────────────────────────────────
 
 func Init() error {
 	os.MkdirAll(DataDir, 0755)
 	os.MkdirAll(DataDir+"/uploads", 0755)
+	os.MkdirAll(configDir(), 0755)
 	if err := loadMain(); err != nil {
 		return err
 	}
@@ -125,22 +135,24 @@ func Init() error {
 
 // ── easypanel.yaml ────────────────────────────────────────────────
 
-const configDir = "config"
-const configPath = "config/easypanel.yaml"
-
 func loadMain() error {
-	os.MkdirAll(configDir, 0755)
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		// migrate from old location if exists
+	os.MkdirAll(configDir(), 0755)
+	if _, err := os.Stat(configPath()); os.IsNotExist(err) {
+		// 迁移旧位置1：根目录 easypanel.yaml
 		if _, err2 := os.Stat("easypanel.yaml"); err2 == nil {
 			data, _ := os.ReadFile("easypanel.yaml")
-			os.WriteFile(configPath, data, 0600)
+			os.WriteFile(configPath(), data, 0600)
 			os.Rename("easypanel.yaml", "easypanel.yaml.bak")
+		// 迁移旧位置2：config/easypanel.yaml（旧版单独 config 目录）
+		} else if _, err3 := os.Stat("config/easypanel.yaml"); err3 == nil {
+			data, _ := os.ReadFile("config/easypanel.yaml")
+			os.WriteFile(configPath(), data, 0600)
+			os.Rename("config/easypanel.yaml", "config/easypanel.yaml.bak")
 		} else {
 			return createDefaultMain()
 		}
 	}
-	data, err := os.ReadFile(configPath)
+	data, err := os.ReadFile(configPath())
 	if err != nil {
 		return err
 	}
@@ -163,12 +175,12 @@ func createDefaultMain() error {
 }
 
 func saveMain() error {
-	os.MkdirAll(configDir, 0755)
+	os.MkdirAll(configDir(), 0755)
 	data, err := yaml.Marshal(Main)
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(configPath, data, 0600)
+	return os.WriteFile(configPath(), data, 0600)
 }
 
 func SaveMain() error { return saveMain() }
