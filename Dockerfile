@@ -8,14 +8,14 @@ WORKDIR /app
 RUN apk add --no-cache ca-certificates tzdata
 
 RUN mkdir -p /app/data && chmod 755 /app/data
-RUN mkdir -p /app/config && chmod 755 /app/config
+RUN mkdir -p /app/data/config && chmod 755 /app/data/config
 
 # 根据目标架构自动选择二进制
 COPY easypanel-linux-${TARGETARCH}-bin /app/easypanel
 RUN chmod +x /app/easypanel
 
 # 声明挂载点（数据和配置目录）
-VOLUME ["/app/data", "/app/config"]
+VOLUME ["/app/data"]
 
 # 默认端口
 EXPOSE 3088
