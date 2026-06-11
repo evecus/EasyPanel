@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"flag"
 	"fmt"
 	"io/fs"
 	"log"
@@ -28,6 +29,11 @@ var distFS embed.FS
 var assetsFS embed.FS
 
 func main() {
+	// ── 命令行参数 ────────────────────────────────────────────────
+	flagPort := flag.Int("port", 0, "HTTP listening port (overrides config file)")
+	flagDir := flag.String("dir", "", "Data directory path (default: ./data next to executable)")
+	flag.Parse()
+
 	if exe, err := os.Executable(); err == nil {
 		exeDir := filepath.Dir(exe)
 		if real, err2 := filepath.EvalSymlinks(exeDir); err2 == nil {
@@ -38,10 +44,27 @@ func main() {
 		}
 	}
 
+	// ── 设置数据目录 ──────────────────────────────────────────────
+	// --dir 支持绝对路径和相对路径（相对于可执行文件目录）
+	if *flagDir != "" {
+		dir := *flagDir
+		if !filepath.IsAbs(dir) {
+			if exe, err := os.Executable(); err == nil {
+				dir = filepath.Join(filepath.Dir(exe), dir)
+			}
+		}
+		config.SetDataDir(dir)
+	}
+
 	gin.SetMode(gin.ReleaseMode)
 
 	if err := config.Init(); err != nil {
 		log.Fatalf("Failed to init config: %v", err)
+	}
+
+	// --port 优先级高于配置文件
+	if *flagPort != 0 {
+		config.Main.Port = *flagPort
 	}
 
 	handler.AppVersion = Version
